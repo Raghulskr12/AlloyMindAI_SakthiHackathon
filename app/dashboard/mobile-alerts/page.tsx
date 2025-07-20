@@ -318,35 +318,15 @@ export default function MobileAlertsPage() {
             </Card>
 
             {/* System Status */}
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white">Mobile System Status</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Push Notifications</span>
-                  <Badge variant="secondary" className="bg-green-500/10 text-green-400 border-green-500/20">
-                    Active
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">SMS Backup</span>
-                  <Badge variant="secondary" className="bg-green-500/10 text-green-400 border-green-500/20">
-                    Enabled
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Network Status</span>
-                  <Badge variant="secondary" className="bg-green-500/10 text-green-400 border-green-500/20">
-                    Connected
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Last Sync</span>
-                  <span className="text-white text-sm">2 min ago</span>
-                </div>
-              </CardContent>
-            </Card>
+
+
+           
+
+          
+               
+               
+
+            
           </div>
         </div>
       </div>

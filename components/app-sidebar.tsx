@@ -51,7 +51,7 @@ const menuItems = [
     icon: AlertTriangle,
   },
   {
-    title: "Mobile Alerts",
+    title: "Alerts",
     url: "/dashboard/mobile-alerts",
     icon: Smartphone,
   },

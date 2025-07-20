@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Brain, CheckCircle, Clock, Lightbulb, Target, BarChart3, ChevronDown, ChevronUp } from "lucide-react"
+import { SidebarTrigger } from "@/components/ui/sidebar"
 
 // Mock data with more realistic metallurgical values
 const alloyGrades = [
@@ -61,12 +62,18 @@ export default function AIConsole() {
 
   return (
     <div className="flex-1 space-y-6 p-6 bg-slate-900 min-h-screen">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center space-x-4">
+          <SidebarTrigger />
+          <div>
+            <h1 className="text-3xl font-bold text-white">Alloy Optimization Console</h1>
+            <p className="text-slate-400">AI-powered alloy composition and cost optimization</p>
+          </div>
+        </div>
+      </div>
       {/* Header with Batch Info */}
       <Card className="bg-slate-800/50 border-slate-700 mb-8">
-        <CardHeader>
-          <CardTitle className="text-white text-3xl font-bold">Alloy Optimization Console</CardTitle>
-          <CardDescription className="text-slate-400">AI-powered alloy composition and cost optimization</CardDescription>
-        </CardHeader>
         <CardContent>
           <div className="flex flex-wrap items-center gap-4">
             <div className="bg-slate-700/30 p-3 rounded-lg border border-slate-600">
