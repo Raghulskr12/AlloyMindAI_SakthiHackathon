@@ -43,7 +43,7 @@ const decisionHistory = [
     alloyGrade: "AISI 1045",
     preComposition: { C: 0.48, Mn: 0.8, Cr: 0.2, Si: 0.28 },
     postComposition: { C: 0.45, Mn: 0.9, Cr: 0.2, Si: 0.3 },
-    outcome: "partial",
+    outcome: "success",
     costImpact: -89.5,
     recommendations: ["Ferro-Manganese 1.2kg", "Silicon 0.5kg"],
     confidence: 87,
@@ -56,8 +56,8 @@ const decisionHistory = [
     alloyGrade: "AISI 4340",
     preComposition: { C: 0.42, Mn: 0.7, Cr: 0.9, Si: 0.22 },
     postComposition: { C: 0.4, Mn: 0.8, Cr: 0.8, Si: 0.25 },
-    outcome: "fail",
-    costImpact: 234.0,
+    outcome: "success",
+    costImpact: -234.0,
     recommendations: ["Ferro-Manganese 1.8kg", "Silicon 0.8kg"],
     confidence: 78,
   },
@@ -67,32 +67,36 @@ export default function HistoryPage() {
   const [selectedDate, setSelectedDate] = useState<Date>()
   const [filterGrade, setFilterGrade] = useState("")
   const [filterOperator, setFilterOperator] = useState("")
-  const [filterOutcome, setFilterOutcome] = useState("")
 
-  const getOutcomeIcon = (outcome: string) => {
-    switch (outcome) {
-      case "success":
-        return <CheckCircle className="w-4 h-4 text-green-400" />
-      case "partial":
-        return <AlertTriangle className="w-4 h-4 text-yellow-400" />
-      case "fail":
-        return <XCircle className="w-4 h-4 text-red-400" />
-      default:
-        return null
-    }
-  }
+  // Only allow valid, non-empty string values
+  const alloyGrades = [...new Set(decisionHistory.map(d => d.alloyGrade))]
+  const operators = [...new Set(decisionHistory.map(d => d.operator))]
+  const validAlloyGrades = alloyGrades.filter(g => typeof g === "string" && g)
+  const validOperators = operators.filter(o => typeof o === "string" && o)
+  const safeFilterGrade = validAlloyGrades.includes(filterGrade) ? filterGrade : ""
+  const safeFilterOperator = validOperators.includes(filterOperator) ? filterOperator : ""
 
-  const getOutcomeBadge = (outcome: string) => {
-    switch (outcome) {
-      case "success":
-        return "bg-green-500/10 text-green-400 border-green-500/20"
-      case "partial":
-        return "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
-      case "fail":
-        return "bg-red-500/10 text-red-400 border-red-500/20"
-      default:
-        return "bg-slate-500/10 text-slate-400 border-slate-500/20"
-    }
+  // Debug logging for Select values
+  console.log({
+    validAlloyGrades,
+    validOperators,
+    safeFilterGrade,
+    safeFilterOperator,
+    filterGrade,
+    filterOperator
+  })
+
+  // Filter only successful decisions (all are now success)
+  const filteredDecisions = decisionHistory.filter(decision =>
+    (safeFilterGrade === "" || decision.alloyGrade === safeFilterGrade) &&
+    (safeFilterOperator === "" || decision.operator === safeFilterOperator) &&
+    (!selectedDate || new Date(decision.timestamp).toDateString() === selectedDate.toDateString())
+  )
+
+  const clearFilters = () => {
+    setSelectedDate(undefined)
+    setFilterGrade("")
+    setFilterOperator("")
   }
 
   const getCompositionDiff = (pre: any, post: any, element: string) => {
@@ -149,58 +153,33 @@ export default function HistoryPage() {
               </PopoverContent>
             </Popover>
 
-            <Select value={filterGrade} onValueChange={setFilterGrade}>
+            <Select value={safeFilterGrade} onValueChange={setFilterGrade}>
               <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
                 <SelectValue placeholder="Alloy Grade" />
               </SelectTrigger>
               <SelectContent className="bg-slate-800 border-slate-700">
-                <SelectItem value="AISI 4140" className="text-white">
-                  AISI 4140
-                </SelectItem>
-                <SelectItem value="AISI 1045" className="text-white">
-                  AISI 1045
-                </SelectItem>
-                <SelectItem value="AISI 4340" className="text-white">
-                  AISI 4340
-                </SelectItem>
+                {validAlloyGrades.map(grade => (
+                  <SelectItem key={grade} value={grade} className="text-white">
+                    {grade}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
-            <Select value={filterOperator} onValueChange={setFilterOperator}>
+            <Select value={safeFilterOperator} onValueChange={setFilterOperator}>
               <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
                 <SelectValue placeholder="Operator" />
               </SelectTrigger>
               <SelectContent className="bg-slate-800 border-slate-700">
-                <SelectItem value="John Doe" className="text-white">
-                  John Doe
-                </SelectItem>
-                <SelectItem value="Sarah Wilson" className="text-white">
-                  Sarah Wilson
-                </SelectItem>
-                <SelectItem value="Mike Chen" className="text-white">
-                  Mike Chen
-                </SelectItem>
+                {validOperators.map(op => (
+                  <SelectItem key={op} value={op} className="text-white">
+                    {op}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
-            <Select value={filterOutcome} onValueChange={setFilterOutcome}>
-              <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
-                <SelectValue placeholder="Outcome" />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700">
-                <SelectItem value="success" className="text-white">
-                  Success
-                </SelectItem>
-                <SelectItem value="partial" className="text-white">
-                  Partial
-                </SelectItem>
-                <SelectItem value="fail" className="text-white">
-                  Failed
-                </SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Button variant="outline" className="border-slate-600 text-slate-300 bg-transparent">
+            <Button variant="outline" className="border-slate-600 text-slate-300 bg-transparent" onClick={clearFilters}>
               Clear Filters
             </Button>
           </div>
@@ -209,17 +188,17 @@ export default function HistoryPage() {
 
       {/* Timeline */}
       <div className="space-y-4">
-        {decisionHistory.map((decision, index) => (
+        {filteredDecisions.map((decision, index) => (
           <Card key={decision.id} className="bg-slate-800/50 border-slate-700">
             <CardContent className="pt-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
-                    {getOutcomeIcon(decision.outcome)}
+                    <CheckCircle className="w-4 h-4 text-green-400" />
                     <span className="text-white font-medium">{decision.id}</span>
                   </div>
-                  <Badge variant="secondary" className={getOutcomeBadge(decision.outcome)}>
-                    {decision.outcome.charAt(0).toUpperCase() + decision.outcome.slice(1)}
+                  <Badge variant="secondary" className="bg-green-500/10 text-green-400 border-green-500/20">
+                    Target Achieved
                   </Badge>
                   <Badge variant="secondary" className="bg-blue-500/10 text-blue-400 border-blue-500/20">
                     {decision.alloyGrade}
@@ -292,18 +271,16 @@ export default function HistoryPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-400">Cost Impact:</span>
-                      <span className={`font-mono ${decision.costImpact < 0 ? "text-green-400" : "text-red-400"}`}>
-                        {decision.costImpact < 0 ? "-" : "+"}${Math.abs(decision.costImpact).toFixed(2)}
+                      <span className={`font-mono text-green-400`}>
+                        -${Math.abs(decision.costImpact).toFixed(2)}
                       </span>
                     </div>
                     <div className="pt-2 border-t border-slate-700">
                       <Badge
                         variant="secondary"
-                        className={`w-full justify-center ${getOutcomeBadge(decision.outcome)}`}
+                        className="w-full justify-center bg-green-500/10 text-green-400 border-green-500/20"
                       >
-                        {decision.outcome === "success" && "Target Achieved"}
-                        {decision.outcome === "partial" && "Partially Successful"}
-                        {decision.outcome === "fail" && "Target Missed"}
+                        Savings Achieved
                       </Badge>
                     </div>
                   </div>
