@@ -6,286 +6,278 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { SidebarTrigger } from "@/components/ui/sidebar"
-import { Brain, CheckCircle, Clock, Lightbulb, Target, BarChart3 } from "lucide-react"
+import { Brain, CheckCircle, Clock, Lightbulb, Target, BarChart3, ChevronDown, ChevronUp } from "lucide-react"
+
+// Mock data with more realistic metallurgical values
+const alloyGrades = [
+  { id: "AISI-4140", name: "AISI 4140 Chrome-Moly" },
+  { id: "SAE-1045", name: "SAE 1045 Carbon Steel" },
+  { id: "DIN-1.2344", name: "DIN 1.2344 Tool Steel" }
+]
 
 const analysisData = [
-  { element: "Carbon", current: 0.45, target: 0.4, gap: 0.05, confidence: 92 },
-  { element: "Manganese", current: 1.2, target: 1.3, gap: -0.1, confidence: 88 },
-  { element: "Chromium", current: 0.8, target: 1.0, gap: -0.2, confidence: 95 },
-  { element: "Silicon", current: 0.25, target: 0.3, gap: -0.05, confidence: 90 },
+  { 
+    element: "Carbon", 
+    symbol: "C", 
+    current: 0.45, 
+    target: { min: 0.38, max: 0.43 }, 
+    confidence: 92,
+    effect: "Strength ↑↑, Ductility ↓" 
+  },
+  { 
+    element: "Manganese", 
+    symbol: "Mn", 
+    current: 1.2, 
+    target: { min: 1.25, max: 1.35 }, 
+    confidence: 88,
+    effect: "Hardenability ↑, Toughness ↑" 
+  },
+  // More elements...
 ]
 
 const recommendations = [
   {
     id: 1,
-    type: "Ferro-Manganese",
-    quantity: "2.5 kg",
-    cost: "$45.00",
+    type: "FeMn (High Carbon)",
+    formula: "FeMn80C7.5",
+    quantity: { value: 2.5, unit: "kg" },
+    cost: 45.00,
     priority: "high",
-    reason: "Correct Mn deficiency and improve hardenability",
+    impact: "Mn +0.15%, C +0.02%",
+    reason: "Corrects Mn deficiency while minimizing C increase"
   },
-  {
-    id: 2,
-    type: "Ferro-Chrome",
-    quantity: "1.8 kg",
-    cost: "$72.00",
-    priority: "medium",
-    reason: "Enhance corrosion resistance",
-  },
-  {
-    id: 3,
-    type: "Silicon",
-    quantity: "0.8 kg",
-    cost: "$12.00",
-    priority: "low",
-    reason: "Improve deoxidation",
-  },
+  // More recommendations...
 ]
 
-const scenarios = [
-  { name: "Conservative", cost: "$89.00", success: 85, time: "15 min" },
-  { name: "Optimal", cost: "$129.00", success: 95, time: "12 min" },
-  { name: "Aggressive", cost: "$156.00", success: 78, time: "8 min" },
-]
-
-export default function AIConsolePage() {
-  const [selectedScenario, setSelectedScenario] = useState("Optimal")
-  const [showExplanation, setShowExplanation] = useState(false)
-  const [overallConfidence] = useState(91)
+export default function AIConsole() {
+  const [currentGrade, setCurrentGrade] = useState(alloyGrades[0])
+  const [expandedElement, setExpandedElement] = useState<string | null>(null)
+  const [approved, setApproved] = useState(false)
+  
+  // Toggle element detail view
+  const toggleElement = (element: string) => {
+    setExpandedElement(expandedElement === element ? null : element)
+  }
 
   return (
     <div className="flex-1 space-y-6 p-6 bg-slate-900 min-h-screen">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <SidebarTrigger />
-          <div>
-            <h1 className="text-3xl font-bold text-white">AI Recommendation Console</h1>
-            <p className="text-slate-400">Intelligent alloy optimization suggestions</p>
+      {/* Header with Batch Info */}
+      <Card className="bg-slate-800/50 border-slate-700 mb-8">
+        <CardHeader>
+          <CardTitle className="text-white text-3xl font-bold">Alloy Optimization Console</CardTitle>
+          <CardDescription className="text-slate-400">AI-powered alloy composition and cost optimization</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="bg-slate-700/30 p-3 rounded-lg border border-slate-600">
+              <p className="text-sm text-slate-400">Alloy Grade</p>
+              <select 
+                value={currentGrade.id}
+                onChange={(e) => setCurrentGrade(alloyGrades.find(g => g.id === e.target.value)!)}
+                className="font-medium text-white bg-transparent border-none focus:outline-none"
+              >
+                {alloyGrades.map(grade => (
+                  <option key={grade.id} value={grade.id} className="bg-slate-800 text-white">{grade.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="bg-slate-700/30 p-3 rounded-lg border border-slate-600">
+              <p className="text-sm text-slate-400">Heat ID</p>
+              <p className="font-mono font-medium text-white">#H-{Math.floor(Math.random()*9000)+1000}</p>
+            </div>
+            <Badge className="bg-green-500/10 text-green-400 border-green-500/20">
+              <Brain className="w-4 h-4 mr-1" />
+              AI Model Active
+            </Badge>
           </div>
-        </div>
-        <div className="flex items-center space-x-4">
-          <Badge variant="secondary" className="bg-green-500/10 text-green-400 border-green-500/20">
-            <Brain className="w-3 h-3 mr-1" />
-            Model Active
-          </Badge>
-          <Badge variant="secondary" className="bg-blue-500/10 text-blue-400 border-blue-500/20">
-            Confidence: {overallConfidence}%
-          </Badge>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
+      {/* Main Dashboard Grid */}
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Current Analysis */}
+        
+        {/* Current Composition Analysis */}
         <Card className="bg-slate-800/50 border-slate-700">
           <CardHeader>
-            <CardTitle className="text-white flex items-center space-x-2">
-              <Target className="w-5 h-5" />
-              <span>Current Analysis</span>
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Target className="text-blue-600" />
+              <span>Current Composition</span>
             </CardTitle>
-            <CardDescription className="text-slate-400">Element-by-element gap visualization</CardDescription>
+            <CardDescription className="text-slate-400">Real-time spectrometer analysis vs target</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {analysisData.map((item) => (
-              <div key={item.element} className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-white font-medium">{item.element}</span>
-                  <Badge
-                    variant="secondary"
-                    className={`${item.gap > 0 ? "bg-red-500/10 text-red-400 border-red-500/20" : "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"}`}
-                  >
-                    {item.gap > 0 ? "+" : ""}
-                    {item.gap.toFixed(2)}%
-                  </Badge>
-                </div>
-                <div className="flex justify-between text-sm text-slate-400">
-                  <span>Current: {item.current}%</span>
-                  <span>Target: {item.target}%</span>
-                </div>
-                <div className="space-y-1">
-                  <Progress value={(Math.abs(item.gap) / 0.2) * 100} className="h-2" />
-                  <div className="flex justify-between text-xs text-slate-500">
-                    <span>Confidence: {item.confidence}%</span>
+            {analysisData.map(item => (
+              <div key={item.element} className="border border-slate-600 rounded-lg overflow-hidden bg-slate-700/30">
+                <button 
+                  onClick={() => toggleElement(item.element)}
+                  className={`w-full p-3 flex justify-between items-center ${expandedElement === item.element ? 'bg-blue-900/30' : 'hover:bg-slate-700/50'}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
+                      <span className="font-mono text-sm text-blue-300">{item.symbol}</span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-left text-white">{item.element}</p>
+                      <p className="text-xs text-slate-400 text-left">
+                        Current: {item.current}% | Target: {item.target.min}–{item.target.max}%
+                      </p>
+                    </div>
                   </div>
-                </div>
+                  {expandedElement === item.element ? <ChevronUp className="text-blue-400" /> : <ChevronDown className="text-slate-400" />}
+                </button>
+                
+                {expandedElement === item.element && (
+                  <div className="p-4 bg-slate-800 border-t border-slate-700">
+                    <div className="grid grid-cols-2 gap-4 mb-3">
+                      <div>
+                        <p className="text-xs text-slate-400">Effect on Properties</p>
+                        <p className="font-medium text-white">{item.effect}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-400">Model Confidence</p>
+                        <Progress value={item.confidence} className="h-2" />
+                      </div>
+                    </div>
+                    <Alert className="bg-blue-500/10 border-blue-500/20">
+                      <AlertDescription className="text-sm text-blue-200">
+                        {item.element} content affects {item.effect.split(",")[0]}. 
+                        {item.current < item.target.min ? " Below" : " Above"} optimal range.
+                      </AlertDescription>
+                    </Alert>
+                  </div>
+                )}
               </div>
             ))}
-
-            <div className="pt-4 border-t border-slate-700">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-white font-medium">Overall Confidence</span>
-                <span className="text-white font-mono">{overallConfidence}%</span>
-              </div>
-              <Progress value={overallConfidence} className="h-3" />
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full border-slate-600 text-slate-300 bg-transparent"
-              onClick={() => setShowExplanation(!showExplanation)}
-            >
-              <Lightbulb className="w-4 h-4 mr-2" />
-              {showExplanation ? "Hide" : "Show"} Model Explanation
-            </Button>
-
-            {showExplanation && (
-              <Alert className="bg-blue-500/10 border-blue-500/20">
-                <AlertDescription className="text-blue-400 text-sm">
-                  SHAP values indicate Carbon content has highest impact on current prediction. Temperature and previous
-                  batch history are secondary factors.
-                </AlertDescription>
-              </Alert>
-            )}
           </CardContent>
         </Card>
 
         {/* Recommended Actions */}
         <Card className="bg-slate-800/50 border-slate-700">
           <CardHeader>
-            <CardTitle className="text-white flex items-center space-x-2">
-              <CheckCircle className="w-5 h-5" />
-              <span>Recommended Actions</span>
+            <CardTitle className="flex items-center gap-2 text-white">
+              <CheckCircle className="text-green-600" />
+              <span>Recommended Additions</span>
             </CardTitle>
-            <CardDescription className="text-slate-400">Optimized alloy additions with cost analysis</CardDescription>
+            <CardDescription className="text-slate-400">Optimized material adjustments</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {recommendations.map((rec) => (
-              <div key={rec.id} className="p-4 rounded-lg bg-slate-700/50 border border-slate-600">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-white font-medium">{rec.type}</span>
-                  <Badge
-                    variant="secondary"
-                    className={`${
-                      rec.priority === "high"
-                        ? "bg-red-500/10 text-red-400 border-red-500/20"
-                        : rec.priority === "medium"
-                          ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
-                          : "bg-green-500/10 text-green-400 border-green-500/20"
-                    }`}
-                  >
-                    {rec.priority}
-                  </Badge>
-                </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Quantity:</span>
-                    <span className="text-white font-mono">{rec.quantity}</span>
+            {recommendations.map(rec => (
+              <div key={rec.id} className="border border-slate-600 rounded-lg p-4 bg-slate-700/30 hover:bg-slate-700/50 transition-colors">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <p className="font-medium text-white">{rec.type}</p>
+                    <p className="text-sm text-slate-400 font-mono">{rec.formula}</p>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Cost:</span>
-                    <span className="text-white font-mono">{rec.cost}</span>
-                  </div>
-                  <p className="text-slate-300 text-xs mt-2">{rec.reason}</p>
+                 <Badge className={rec.priority === "high"
+                   ? "bg-red-500/10 text-red-400 border-red-500/20"
+                   : "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                 }>
+                   {rec.priority}
+                 </Badge>
                 </div>
+                
+                <div className="grid grid-cols-3 gap-2 text-sm mb-3">
+                  <div>
+                    <p className="text-slate-400">Quantity</p>
+                    <p className="font-medium text-white">{rec.quantity.value} {rec.quantity.unit}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-400">Impact</p>
+                    <p className="font-medium text-white">{rec.impact}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-400">Cost</p>
+                    <p className="font-medium text-white">${rec.cost.toFixed(2)}</p>
+                  </div>
+                </div>
+                
+                <p className="text-sm text-slate-300">{rec.reason}</p>
               </div>
             ))}
-
-            <div className="pt-4 border-t border-slate-700">
-              <h4 className="text-white font-medium mb-3">Alternative Scenarios</h4>
-              <div className="space-y-2">
-                {scenarios.map((scenario) => (
-                  <button
-                    key={scenario.name}
-                    onClick={() => setSelectedScenario(scenario.name)}
-                    className={`w-full p-3 rounded-lg border text-left transition-colors ${
-                      selectedScenario === scenario.name
-                        ? "bg-blue-500/20 border-blue-500/30 text-blue-400"
-                        : "bg-slate-700/30 border-slate-600 text-slate-300 hover:bg-slate-700/50"
-                    }`}
-                  >
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-medium">{scenario.name}</span>
-                      <span className="text-sm">{scenario.cost}</span>
-                    </div>
-                    <div className="flex justify-between text-xs opacity-75">
-                      <span>Success: {scenario.success}%</span>
-                      <span>Time: {scenario.time}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
+            
+            <Button 
+              variant={approved ? "outline" : "default"} 
+              className="w-full mt-4 border-slate-600 bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+              onClick={() => setApproved(!approved)}
+            >
+              <CheckCircle className="w-4 h-4 mr-2" />
+              {approved ? "Approved ✓" : "Approve Recommendations"}
+            </Button>
           </CardContent>
         </Card>
 
         {/* Projected Outcome */}
         <Card className="bg-slate-800/50 border-slate-700">
           <CardHeader>
-            <CardTitle className="text-white flex items-center space-x-2">
-              <BarChart3 className="w-5 h-5" />
+            <CardTitle className="flex items-center gap-2 text-white">
+              <BarChart3 className="text-purple-600" />
               <span>Projected Outcome</span>
             </CardTitle>
-            <CardDescription className="text-slate-400">Post-addition simulation and cost impact</CardDescription>
+            <CardDescription className="text-slate-400">Expected results after additions</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <h4 className="text-white font-medium">Expected Results</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-3 rounded-lg bg-green-500/10 border border-green-500/20">
-                  <div className="text-2xl font-bold text-green-400">95%</div>
-                  <div className="text-xs text-green-400">Success Rate</div>
-                </div>
-                <div className="text-center p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                  <div className="text-2xl font-bold text-blue-400">12m</div>
-                  <div className="text-xs text-blue-400">Est. Time</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h4 className="text-white font-medium">Cost Impact</h4>
+            {/* Projected Composition */}
+            <div>
+              <h4 className="font-medium mb-3 text-white">Final Composition</h4>
               <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Material Cost:</span>
-                  <span className="text-white">$129.00</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Processing Cost:</span>
-                  <span className="text-white">$45.00</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Potential Savings:</span>
-                  <span className="text-green-400">$280.00</span>
-                </div>
-                <div className="border-t border-slate-700 pt-2">
-                  <div className="flex justify-between font-medium">
-                    <span className="text-white">Net Benefit:</span>
-                    <span className="text-green-400">+$106.00</span>
+                {analysisData.map(item => (
+                  <div key={item.element} className="flex items-center gap-4">
+                    <div className="w-6 h-6 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-mono text-blue-300">{item.symbol}</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-white">{item.element}</span>
+                        <span className="font-mono text-white">
+                          {item.current}% → {item.current + 0.1}%
+                        </span>
+                      </div>
+                      <Progress 
+                        value={((item.current + 0.1 - item.target.min) / (item.target.max - item.target.min)) * 100} 
+                        className="h-2"
+                      />
+                    </div>
                   </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Cost Analysis */}
+            <div className="bg-slate-700/30 rounded-lg p-4 border border-slate-600">
+              <h4 className="font-medium mb-3 text-white">Cost Analysis</h4>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Material Cost</span>
+                  <span className="font-medium text-white">$129.00</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Potential Scrap Savings</span>
+                  <span className="text-green-400 font-medium">-$280.00</span>
+                </div>
+                <div className="border-t border-slate-600 pt-2 flex justify-between font-medium">
+                  <span className="text-white">Net Savings</span>
+                  <span className="text-green-400">+$151.00</span>
                 </div>
               </div>
             </div>
-
-            <div className="space-y-4">
-              <h4 className="text-white font-medium">Historical Accuracy</h4>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Similar Cases:</span>
-                  <span className="text-white">47</span>
+            
+            {/* Quality Metrics */}
+            <div>
+              <h4 className="font-medium mb-3 text-white">Quality Projections</h4>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-400">95%</div>
+                  <p className="text-xs text-slate-400">Yield Strength</p>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Avg. Accuracy:</span>
-                  <span className="text-white">89.4%</span>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-400">88%</div>
+                  <p className="text-xs text-slate-400">Elongation</p>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Last 30 Days:</span>
-                  <span className="text-green-400">92.1%</span>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-400">92%</div>
+                  <p className="text-xs text-slate-400">Hardness</p>
                 </div>
               </div>
-              <Progress value={92} className="h-2" />
-            </div>
-
-            <div className="space-y-3 pt-4 border-t border-slate-700">
-              <Button className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700">
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Approve Recommendations
-              </Button>
-              <Button variant="outline" className="w-full border-slate-600 text-slate-300 bg-transparent">
-                <Clock className="w-4 h-4 mr-2" />
-                Schedule for Later
-              </Button>
             </div>
           </CardContent>
         </Card>
