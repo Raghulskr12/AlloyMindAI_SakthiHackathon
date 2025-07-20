@@ -25,7 +25,7 @@ const decisionHistory = [
   {
     id: "D2024-001",
     timestamp: "2024-01-15 14:30:22",
-    operator: "John Doe",
+    operator: "",
     batchId: "A2024-001",
     alloyGrade: "AISI 4140",
     preComposition: { C: 0.45, Mn: 1.2, Cr: 0.8, Si: 0.25 },
@@ -38,7 +38,7 @@ const decisionHistory = [
   {
     id: "D2024-002",
     timestamp: "2024-01-15 16:45:10",
-    operator: "Sarah Wilson",
+    operator: "",
     batchId: "A2024-002",
     alloyGrade: "AISI 1045",
     preComposition: { C: 0.48, Mn: 0.8, Cr: 0.2, Si: 0.28 },
@@ -51,7 +51,7 @@ const decisionHistory = [
   {
     id: "D2024-003",
     timestamp: "2024-01-16 09:15:33",
-    operator: "Mike Chen",
+    operator: "",
     batchId: "A2024-003",
     alloyGrade: "AISI 4340",
     preComposition: { C: 0.42, Mn: 0.7, Cr: 0.9, Si: 0.22 },
@@ -70,26 +70,19 @@ export default function HistoryPage() {
 
   // Only allow valid, non-empty string values
   const alloyGrades = [...new Set(decisionHistory.map(d => d.alloyGrade))]
-  const operators = [...new Set(decisionHistory.map(d => d.operator))]
   const validAlloyGrades = alloyGrades.filter(g => typeof g === "string" && g)
-  const validOperators = operators.filter(o => typeof o === "string" && o)
   const safeFilterGrade = validAlloyGrades.includes(filterGrade) ? filterGrade : ""
-  const safeFilterOperator = validOperators.includes(filterOperator) ? filterOperator : ""
 
   // Debug logging for Select values
   console.log({
     validAlloyGrades,
-    validOperators,
     safeFilterGrade,
-    safeFilterOperator,
-    filterGrade,
-    filterOperator
+    filterGrade
   })
 
   // Filter only successful decisions (all are now success)
   const filteredDecisions = decisionHistory.filter(decision =>
     (safeFilterGrade === "" || decision.alloyGrade === safeFilterGrade) &&
-    (safeFilterOperator === "" || decision.operator === safeFilterOperator) &&
     (!selectedDate || new Date(decision.timestamp).toDateString() === selectedDate.toDateString())
   )
 
@@ -166,19 +159,6 @@ export default function HistoryPage() {
               </SelectContent>
             </Select>
 
-            <Select value={safeFilterOperator} onValueChange={setFilterOperator}>
-              <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
-                <SelectValue placeholder="Operator" />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700">
-                {validOperators.map(op => (
-                  <SelectItem key={op} value={op} className="text-white">
-                    {op}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
             <Button variant="outline" className="border-slate-600 text-slate-300 bg-transparent" onClick={clearFilters}>
               Clear Filters
             </Button>
@@ -205,10 +185,6 @@ export default function HistoryPage() {
                   </Badge>
                 </div>
                 <div className="text-right text-sm text-slate-400">
-                  <div className="flex items-center space-x-1">
-                    <User className="w-3 h-3" />
-                    <span>{decision.operator}</span>
-                  </div>
                   <div>{decision.timestamp}</div>
                 </div>
               </div>
