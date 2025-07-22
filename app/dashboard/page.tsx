@@ -19,6 +19,10 @@ import {
   Clock,
   StopCircle,
 } from "lucide-react"
+import {
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar
+} from 'recharts';
 
 // Mock data for periodic table elements
 const elements = [
@@ -37,6 +41,35 @@ const alerts = [
   { id: 2, type: "info", message: "Batch #A2024-001 analysis complete", time: "5 min ago" },
   { id: 3, type: "error", message: "Spectrometer calibration required", time: "8 min ago" },
 ]
+
+// Mock data for charts
+const anomalyTypeData = [
+  { name: 'Sensor', value: 4 },
+  { name: 'Process', value: 2 },
+  { name: 'AI', value: 1 },
+  { name: 'Equipment', value: 1 },
+];
+const anomalyTypeColors = ['#38bdf8', '#facc15', '#a3e635', '#f87171'];
+
+const tempTrendData = [
+  { time: '10:00', temp: 1620 },
+  { time: '10:10', temp: 1630 },
+  { time: '10:20', temp: 1640 },
+  { time: '10:30', temp: 1650 },
+  { time: '10:40', temp: 1660 },
+  { time: '10:50', temp: 1655 },
+  { time: '11:00', temp: 1650 },
+];
+
+const batchesByElement = [
+  { element: 'C', batches: 3 },
+  { element: 'Mn', batches: 2 },
+  { element: 'Si', batches: 1 },
+  { element: 'Cr', batches: 2 },
+  { element: 'P', batches: 1 },
+  { element: 'S', batches: 1 },
+  { element: 'Fe', batches: 0 },
+];
 
 export default function DashboardPage() {
   const [furnaceTemp, setFurnaceTemp] = useState(1650)
@@ -124,6 +157,76 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Dashboard Visualizations */}
+        <div className="grid md:grid-cols-3 gap-6">
+          {/* Pie Chart: Anomaly Types */}
+          <Card className="bg-slate-800/50 border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-white">Anomaly Types</CardTitle>
+              <CardDescription className="text-slate-400">Breakdown of anomaly root causes</CardDescription>
+            </CardHeader>
+            <CardContent style={{ height: 240 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={anomalyTypeData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={70}
+                    label
+                  >
+                    {anomalyTypeData.map((entry, idx) => (
+                      <Cell key={`cell-${idx}`} fill={anomalyTypeColors[idx % anomalyTypeColors.length]} />
+                    ))}
+                  </Pie>
+                  <RechartsTooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Line Chart: Furnace Temperature Trend */}
+          <Card className="bg-slate-800/50 border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-white">Furnace Temperature Trend</CardTitle>
+              <CardDescription className="text-slate-400">Last hour temperature readings</CardDescription>
+            </CardHeader>
+            <CardContent style={{ height: 240 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={tempTrendData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis dataKey="time" stroke="#94a3b8" />
+                  <YAxis stroke="#94a3b8" domain={[1600, 1700]} />
+                  <RechartsTooltip />
+                  <Line type="monotone" dataKey="temp" stroke="#38bdf8" strokeWidth={2} dot={{ r: 3 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Bar Chart: Batches Affected by Element */}
+          <Card className="bg-slate-800/50 border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-white">Batches Affected by Element</CardTitle>
+              <CardDescription className="text-slate-400">Recent process impact by element</CardDescription>
+            </CardHeader>
+            <CardContent style={{ height: 240 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={batchesByElement} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis dataKey="element" stroke="#94a3b8" />
+                  <YAxis stroke="#94a3b8" allowDecimals={false} />
+                  <RechartsTooltip />
+                  <Bar dataKey="batches" fill="#facc15" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Periodic Table Visualization */}

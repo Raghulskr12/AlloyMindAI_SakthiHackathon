@@ -50,11 +50,11 @@ const menuItems = [
     url: "/dashboard/anomalies",
     icon: AlertTriangle,
   },
-  {
-    title: "Alerts",
-    url: "/dashboard/mobile-alerts",
-    icon: Smartphone,
-  },
+  // {
+  //   title: "Alerts",
+  //   url: "/dashboard/mobile-alerts",
+  //   icon: Smartphone,
+  // },
   {
     title: "Model Performance",
     url: "/dashboard/performance",
