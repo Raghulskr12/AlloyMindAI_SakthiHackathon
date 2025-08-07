@@ -16,13 +16,8 @@ import { User, Shield, Bell, Eye, Settings, Clock, Save } from "lucide-react"
 
 const currentUser = {
   id: "USR-001",
-<<<<<<< HEAD
-  name: "Sakthi",
-  email: "Sakthi@gmail.com",
-=======
   name: "Sakthi ",
   email: "Sakthi@alloymind.com",
->>>>>>> db84b6305cf6271d69928c918a5c69d4503dd288
   employeeId: "MT001",
   role: "metallurgist",
   department: "Production",
