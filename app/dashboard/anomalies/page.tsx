@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb"
 import { AlertTriangle, CheckCircle, Clock, TrendingDown, Brain, Settings, Activity } from "lucide-react"
 
-const anomalies = [
+const initialAnomalies = [
   {
     id: "ANO-001",
     type: "Spectrometer Drift",
@@ -68,6 +68,31 @@ export default function AnomaliesPage() {
   const [filterStatus, setFilterStatus] = useState("")
   const [filterRootCause, setFilterRootCause] = useState("")
 
+  // Filtered anomalies for display
+  const filteredAnomalies = anomalies.filter((anomaly) => {
+    return (
+      (!filterSeverity || anomaly.severity === filterSeverity) &&
+      (!filterStatus || anomaly.status === filterStatus) &&
+      (!filterRootCause || anomaly.rootCause === filterRootCause)
+    );
+  });
+
+  // Stats for dashboard cards
+  const stats = {
+    active: anomalies.filter((a) => a.status === "active").length,
+    investigating: anomalies.filter((a) => a.status === "investigating").length,
+    resolved: anomalies.filter((a) => a.status === "resolved").length,
+    totalBatches: anomalies.reduce((sum, a) => sum + (a.batchesAffected || 0), 0),
+  };
+
+  // Root cause stats for sidebar
+  const rootCauseTypes = ["Sensor", "Process", "AI", "Equipment"];
+  const rootCauseStats = rootCauseTypes.map((type) => {
+    const count = anomalies.filter((a) => a.rootCause === type).length;
+    const percentage = anomalies.length ? Math.round((count / anomalies.length) * 100) : 0;
+    return { type, count, percentage };
+  });
+
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case "high":
@@ -81,7 +106,7 @@ export default function AnomaliesPage() {
     }
   }
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
         return "bg-red-500/10 text-red-400 border-red-500/20"
@@ -94,7 +119,7 @@ export default function AnomaliesPage() {
     }
   }
 
-  const getRootCauseIcon = (rootCause) => {
+  const getRootCauseIcon = (rootCause: string) => {
     switch (rootCause) {
       case "Sensor":
         return <Activity className="w-4 h-4" />
@@ -230,7 +255,7 @@ export default function AnomaliesPage() {
 
               {/* Anomaly Cards */}
               <div className="space-y-4">
-                {filteredAnomalies.map((anomaly) => (
+                {filteredAnomalies.map((anomaly: typeof initialAnomalies[0]) => (
                   <Card key={anomaly.id} className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors">
                     <CardHeader>
                       <div className="flex items-center justify-between">
@@ -334,7 +359,7 @@ export default function AnomaliesPage() {
                   <CardDescription className="text-slate-400">Current anomalies breakdown</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {rootCauseStats.map((stat) => (
+                  {rootCauseStats.map((stat: { type: string; count: number; percentage: number }) => (
                     <div key={stat.type} className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="text-slate-300">{stat.type}</span>
