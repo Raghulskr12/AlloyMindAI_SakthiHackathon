@@ -16,8 +16,8 @@ import { User, Shield, Bell, Eye, Settings, Clock, Save } from "lucide-react"
 
 const currentUser = {
   id: "USR-001",
-  name: "John Doe",
-  email: "john.doe@alloymind.com",
+  name: "Sakthi",
+  email: "Sakthi@gmail.com",
   employeeId: "MT001",
   role: "metallurgist",
   department: "Production",

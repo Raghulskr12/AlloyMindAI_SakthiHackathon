@@ -148,7 +148,7 @@ export function AppSidebar() {
                     <AvatarFallback className="bg-blue-500 text-white text-xs">JD</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col items-start">
-                    <span className="text-sm">John Doe</span>
+                    <span className="text-sm">Sakthi </span>
                     <span className="text-xs text-slate-400">Metallurgist</span>
                   </div>
                 </SidebarMenuButton>
