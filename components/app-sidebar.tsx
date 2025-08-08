@@ -26,8 +26,9 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useUser, useClerk } from "@clerk/nextjs"
 
 const menuItems = [
   {
@@ -77,6 +78,27 @@ const configItems = [
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const { user, isLoaded } = useUser()
+  const { signOut } = useClerk()
+
+  const getInitials = (firstName?: string | null, lastName?: string | null) => {
+    const first = firstName?.charAt(0) || ""
+    const last = lastName?.charAt(0) || ""
+    return (first + last).toUpperCase() || "U"
+  }
+
+  const getFullName = () => {
+    if (user?.fullName) return user.fullName
+    return `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "User"
+  }
+
+  const getUserRole = () => {
+    return (user?.unsafeMetadata?.role as string) || "User"
+  }
+
+  const handleSignOut = () => {
+    signOut()
+  }
 
   return (
     <Sidebar className="border-r border-slate-700 bg-slate-900">
@@ -141,36 +163,52 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-slate-700 bg-slate-900">
         <SidebarMenu>
           <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton className="text-slate-300 hover:text-white hover:bg-slate-800">
-                  <Avatar className="w-6 h-6">
-                    <AvatarFallback className="bg-blue-500 text-white text-xs">JD</AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col items-start">
-                    <span className="text-sm">John Doe</span>
-                    <span className="text-xs text-slate-400">Metallurgist</span>
-                  </div>
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent side="top" className="w-56 bg-slate-800 border-slate-700">
-                <DropdownMenuItem asChild>
-                  <Link
-                    href="/dashboard/config/profile"
+            {!isLoaded ? (
+              <SidebarMenuButton className="text-slate-300">
+                <Avatar className="w-6 h-6">
+                  <AvatarFallback className="bg-slate-700 text-white text-xs">...</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col items-start">
+                  <span className="text-sm">Loading...</span>
+                  <span className="text-xs text-slate-400">Please wait</span>
+                </div>
+              </SidebarMenuButton>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuButton className="text-slate-300 hover:text-white hover:bg-slate-800">
+                    <Avatar className="w-6 h-6">
+                      <AvatarImage src={user?.imageUrl} alt={getFullName()} />
+                      <AvatarFallback className="bg-blue-500 text-white text-xs">
+                        {getInitials(user?.firstName, user?.lastName)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col items-start">
+                      <span className="text-sm">{getFullName()}</span>
+                      <span className="text-xs text-slate-400 capitalize">{getUserRole()}</span>
+                    </div>
+                  </SidebarMenuButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent side="top" className="w-56 bg-slate-800 border-slate-700">
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href="/dashboard/config/profile"
+                      className="text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer"
+                    >
+                      <User className="w-4 h-4 mr-2" />
+                      Profile Settings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={handleSignOut}
                     className="text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer"
                   >
-                    <User className="w-4 h-4 mr-2" />
-                    Profile Settings
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/" className="text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer">
                     <LogOut className="w-4 h-4 mr-2" />
                     Sign Out
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

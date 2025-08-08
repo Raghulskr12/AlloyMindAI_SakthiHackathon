@@ -3,8 +3,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { ArrowRight, Zap, Target, TrendingUp, Shield, Clock, DollarSign } from "lucide-react"
 import Link from "next/link"
+import { auth } from "@clerk/nextjs/server"
+import { redirect } from "next/navigation"
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const { userId } = await auth()
+  
+  // If user is already authenticated, redirect to dashboard
+  if (userId) {
+    redirect("/dashboard")
+  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
@@ -16,9 +24,9 @@ export default function LandingPage() {
             </div>
             <h1 className="text-2xl font-bold text-white">AlloyMind AI</h1>
           </div>
-          <Link href="/dashboard">
+          <Link href="/auth/sign-in">
             <Button variant="outline" className="border-slate-600 text-slate-200 hover:bg-slate-800 bg-transparent">
-              Enter Dashboard
+              Sign In
             </Button>
           </Link>
         </div>
@@ -41,7 +49,7 @@ export default function LandingPage() {
           automated quality control for optimal alloy composition.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/dashboard">
+          <Link href="/auth/sign-in">
             <Button
               size="lg"
               className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-3"
@@ -50,13 +58,11 @@ export default function LandingPage() {
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           </Link>
-          <Button
-            size="lg"
-            variant="outline"
-            className="border-slate-600 text-slate-200 hover:bg-slate-800 px-8 py-3 bg-transparent"
-          >
-            Watch Demo
-          </Button>
+          <Link href="/auth/sign-up">
+            <Button size="lg" variant="outline" className="border-slate-600 text-slate-200 hover:bg-slate-800 bg-transparent px-8 py-3">
+              Sign Up
+            </Button>
+          </Link>
         </div>
       </section>
 

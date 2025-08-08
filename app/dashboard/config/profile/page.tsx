@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -8,38 +8,75 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { User, Shield, Bell, Eye, Settings, Clock, Save } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { User, Shield, Bell, Eye, Settings, Clock, Save, Mail, Calendar } from "lucide-react"
+import { useUser } from "@clerk/nextjs"
 
-const currentUser = {
-  id: "USR-001",
-  name: "Sakthi ",
-  email: "Sakthi@alloymind.com",
-  employeeId: "MT001",
-  role: "metallurgist",
-  department: "Production",
-  shift: "Day Shift",
-  status: "active",
-  lastLogin: "2024-01-15 14:30",
+interface UserProfile {
+  employeeId: string
+  role: string
+  department: string
+  shift: string
   permissions: {
-    view: true,
-    approve: true,
-    configure: false,
-    emergency: false,
-  },
+    view: boolean
+    approve: boolean
+    configure: boolean
+    emergency: boolean
+  }
   preferences: {
-    notifications: true,
-    emailAlerts: true,
-    soundAlerts: false,
-    darkMode: true,
-    autoRefresh: true,
-    refreshInterval: 30,
-  },
+    notifications: boolean
+    emailAlerts: boolean
+    soundAlerts: boolean
+    darkMode: boolean
+    autoRefresh: boolean
+    refreshInterval: number
+  }
 }
 
 export default function ProfilePage() {
-  const [user, setUser] = useState(currentUser)
+  const { user, isLoaded } = useUser()
   const [isEditing, setIsEditing] = useState(false)
+  const [profile, setProfile] = useState<UserProfile>({
+    employeeId: "",
+    role: "operator",
+    department: "Production",
+    shift: "Day Shift",
+    permissions: {
+      view: true,
+      approve: false,
+      configure: false,
+      emergency: false,
+    },
+    preferences: {
+      notifications: true,
+      emailAlerts: true,
+      soundAlerts: false,
+      darkMode: true,
+      autoRefresh: true,
+      refreshInterval: 30,
+    },
+  })
+
+  useEffect(() => {
+    if (user) {
+      // Generate employee ID based on user data or use metadata if available
+      const employeeId = (user.unsafeMetadata?.employeeId as string) || 
+                        `${user.firstName?.substring(0, 2) || 'US'}${user.id.substring(0, 3).toUpperCase()}`
+      
+      // Get role from user metadata or default
+      const role = (user.unsafeMetadata?.role as string) || "operator"
+      
+      setProfile(prev => ({
+        ...prev,
+        employeeId,
+        role,
+        department: (user.unsafeMetadata?.department as string) || prev.department,
+        shift: (user.unsafeMetadata?.shift as string) || prev.shift,
+        permissions: (user.unsafeMetadata?.permissions as typeof prev.permissions) || prev.permissions,
+        preferences: (user.unsafeMetadata?.preferences as typeof prev.preferences) || prev.preferences,
+      }))
+    }
+  }, [user])
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -54,17 +91,76 @@ export default function ProfilePage() {
     }
   }
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
+  const getInitials = (firstName?: string | null, lastName?: string | null) => {
+    const first = firstName?.charAt(0) || ""
+    const last = lastName?.charAt(0) || ""
+    return (first + last).toUpperCase() || "U"
   }
 
-  const handleSave = () => {
-    setIsEditing(false)
-    // Save logic would go here
+  const getFullName = () => {
+    if (user?.fullName) return user.fullName
+    return `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "User"
+  }
+
+  const getPrimaryEmail = () => {
+    return user?.emailAddresses?.[0]?.emailAddress || "No email"
+  }
+
+  const formatLastSignIn = () => {
+    if (!user?.lastSignInAt) return "Never"
+    return new Date(user.lastSignInAt).toLocaleString()
+  }
+
+  const handleSave = async () => {
+    if (user) {
+      try {
+        // Update user metadata with profile information
+        await user.update({
+          unsafeMetadata: {
+            ...user.unsafeMetadata,
+            employeeId: profile.employeeId,
+            role: profile.role,
+            department: profile.department,
+            shift: profile.shift,
+            permissions: profile.permissions,
+            preferences: profile.preferences,
+          }
+        })
+        setIsEditing(false)
+      } catch (error) {
+        console.error("Error updating profile:", error)
+      }
+    }
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="flex flex-col min-h-screen bg-slate-900">
+        <div className="flex h-16 shrink-0 items-center gap-2 border-b border-slate-700 px-4 bg-slate-900">
+          <div className="flex-1 flex items-center">
+            <h1 className="text-xl font-semibold text-white">Profile Settings</h1>
+          </div>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-white">Loading...</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="flex flex-col min-h-screen bg-slate-900">
+        <div className="flex h-16 shrink-0 items-center gap-2 border-b border-slate-700 px-4 bg-slate-900">
+          <div className="flex-1 flex items-center">
+            <h1 className="text-xl font-semibold text-white">Profile Settings</h1>
+          </div>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-white">User not found</div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -110,18 +206,19 @@ export default function ProfilePage() {
               <CardContent className="space-y-6">
                 <div className="flex items-center space-x-6">
                   <Avatar className="w-20 h-20">
+                    <AvatarImage src={user.imageUrl} alt={getFullName()} />
                     <AvatarFallback className="bg-blue-500 text-white text-2xl">
-                      {getInitials(user.name)}
+                      {getInitials(user.firstName, user.lastName)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="space-y-2">
-                    <h3 className="text-xl font-semibold text-white">{user.name}</h3>
+                    <h3 className="text-xl font-semibold text-white">{getFullName()}</h3>
                     <div className="flex items-center space-x-2">
-                      <Badge variant="secondary" className={getRoleColor(user.role)}>
-                        {user.role}
+                      <Badge variant="secondary" className={getRoleColor(profile.role)}>
+                        {profile.role}
                       </Badge>
                       <Badge variant="secondary" className="bg-green-500/10 text-green-400 border-green-500/20">
-                        {user.status}
+                        Active
                       </Badge>
                     </div>
                   </div>
@@ -130,16 +227,28 @@ export default function ProfilePage() {
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="name" className="text-slate-300">
-                        Full Name
+                      <Label htmlFor="firstName" className="text-slate-300">
+                        First Name
                       </Label>
                       <Input
-                        id="name"
-                        value={user.name}
-                        onChange={(e) => setUser({ ...user, name: e.target.value })}
-                        disabled={!isEditing}
+                        id="firstName"
+                        value={user.firstName || ""}
+                        disabled
                         className="bg-slate-700/50 border-slate-600 text-white disabled:opacity-50"
                       />
+                      <p className="text-xs text-slate-500">Managed by Clerk</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName" className="text-slate-300">
+                        Last Name
+                      </Label>
+                      <Input
+                        id="lastName"
+                        value={user.lastName || ""}
+                        disabled
+                        className="bg-slate-700/50 border-slate-600 text-white disabled:opacity-50"
+                      />
+                      <p className="text-xs text-slate-500">Managed by Clerk</p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="email" className="text-slate-300">
@@ -148,11 +257,11 @@ export default function ProfilePage() {
                       <Input
                         id="email"
                         type="email"
-                        value={user.email}
-                        onChange={(e) => setUser({ ...user, email: e.target.value })}
-                        disabled={!isEditing}
+                        value={getPrimaryEmail()}
+                        disabled
                         className="bg-slate-700/50 border-slate-600 text-white disabled:opacity-50"
                       />
+                      <p className="text-xs text-slate-500">Managed by Clerk</p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="employeeId" className="text-slate-300">
@@ -160,20 +269,46 @@ export default function ProfilePage() {
                       </Label>
                       <Input
                         id="employeeId"
-                        value={user.employeeId}
-                        disabled
+                        value={profile.employeeId}
+                        onChange={(e) => setProfile({ ...profile, employeeId: e.target.value })}
+                        disabled={!isEditing}
                         className="bg-slate-700/50 border-slate-600 text-white disabled:opacity-50"
                       />
                     </div>
                   </div>
                   <div className="space-y-4">
                     <div className="space-y-2">
+                      <Label htmlFor="role" className="text-slate-300">
+                        Role
+                      </Label>
+                      <Select
+                        value={profile.role}
+                        onValueChange={(value) => setProfile({ ...profile, role: value })}
+                        disabled={!isEditing}
+                      >
+                        <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white disabled:opacity-50">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-slate-800 border-slate-700">
+                          <SelectItem value="operator" className="text-white">
+                            Operator
+                          </SelectItem>
+                          <SelectItem value="metallurgist" className="text-white">
+                            Metallurgist
+                          </SelectItem>
+                          <SelectItem value="admin" className="text-white">
+                            Administrator
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
                       <Label htmlFor="department" className="text-slate-300">
                         Department
                       </Label>
                       <Select
-                        value={user.department}
-                        onValueChange={(value) => setUser({ ...user, department: value })}
+                        value={profile.department}
+                        onValueChange={(value) => setProfile({ ...profile, department: value })}
                         disabled={!isEditing}
                       >
                         <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white disabled:opacity-50">
@@ -200,8 +335,8 @@ export default function ProfilePage() {
                         Shift Assignment
                       </Label>
                       <Select
-                        value={user.shift}
-                        onValueChange={(value) => setUser({ ...user, shift: value })}
+                        value={profile.shift}
+                        onValueChange={(value) => setProfile({ ...profile, shift: value })}
                         disabled={!isEditing}
                       >
                         <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white disabled:opacity-50">
@@ -209,22 +344,22 @@ export default function ProfilePage() {
                         </SelectTrigger>
                         <SelectContent className="bg-slate-800 border-slate-700">
                           <SelectItem value="Day Shift" className="text-white">
-                            Day Shift (6AM - 6PM)
+                            Day Shift (6 AM - 2 PM)
+                          </SelectItem>
+                          <SelectItem value="Evening Shift" className="text-white">
+                            Evening Shift (2 PM - 10 PM)
                           </SelectItem>
                           <SelectItem value="Night Shift" className="text-white">
-                            Night Shift (6PM - 6AM)
-                          </SelectItem>
-                          <SelectItem value="Rotating" className="text-white">
-                            Rotating Shift
+                            Night Shift (10 PM - 6 AM)
                           </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-slate-300">Last Login</Label>
-                      <div className="flex items-center space-x-2 text-white">
+                      <Label className="text-slate-300">Last Sign In</Label>
+                      <div className="flex items-center space-x-2 p-2 bg-slate-700/30 rounded border border-slate-600">
                         <Clock className="w-4 h-4 text-slate-400" />
-                        <span>{user.lastLogin}</span>
+                        <span className="text-white text-sm">{formatLastSignIn()}</span>
                       </div>
                     </div>
                   </div>
@@ -236,138 +371,114 @@ export default function ProfilePage() {
             <Card className="bg-slate-800/50 border-slate-700">
               <CardHeader>
                 <CardTitle className="text-white flex items-center space-x-2">
-                  <Settings className="w-5 h-5" />
+                  <Bell className="w-5 h-5" />
                   <span>Preferences</span>
                 </CardTitle>
                 <CardDescription className="text-slate-400">
-                  Customize your dashboard and notification settings
+                  Customize your notification and display settings
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-4">
-                    <h4 className="text-white font-medium">Notifications</h4>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Bell className="w-4 h-4 text-slate-400" />
-                          <span className="text-white">Push Notifications</span>
-                        </div>
-                        <Switch
-                          checked={user.preferences.notifications}
-                          onCheckedChange={(checked) =>
-                            setUser({
-                              ...user,
-                              preferences: { ...user.preferences, notifications: checked },
-                            })
-                          }
-                          disabled={!isEditing}
-                        />
+                    <div className="flex items-center justify-between p-3 rounded border border-slate-600">
+                      <div className="space-y-1">
+                        <span className="text-white font-medium">Push Notifications</span>
+                        <p className="text-sm text-slate-400">Receive alerts and updates</p>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Bell className="w-4 h-4 text-slate-400" />
-                          <span className="text-white">Email Alerts</span>
-                        </div>
-                        <Switch
-                          checked={user.preferences.emailAlerts}
-                          onCheckedChange={(checked) =>
-                            setUser({
-                              ...user,
-                              preferences: { ...user.preferences, emailAlerts: checked },
-                            })
-                          }
-                          disabled={!isEditing}
-                        />
+                      <Switch
+                        checked={profile.preferences.notifications}
+                        onCheckedChange={(checked) =>
+                          setProfile({
+                            ...profile,
+                            preferences: { ...profile.preferences, notifications: checked },
+                          })
+                        }
+                        disabled={!isEditing}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded border border-slate-600">
+                      <div className="space-y-1">
+                        <span className="text-white font-medium">Email Alerts</span>
+                        <p className="text-sm text-slate-400">Get important updates via email</p>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Bell className="w-4 h-4 text-slate-400" />
-                          <span className="text-white">Sound Alerts</span>
-                        </div>
-                        <Switch
-                          checked={user.preferences.soundAlerts}
-                          onCheckedChange={(checked) =>
-                            setUser({
-                              ...user,
-                              preferences: { ...user.preferences, soundAlerts: checked },
-                            })
-                          }
-                          disabled={!isEditing}
-                        />
+                      <Switch
+                        checked={profile.preferences.emailAlerts}
+                        onCheckedChange={(checked) =>
+                          setProfile({
+                            ...profile,
+                            preferences: { ...profile.preferences, emailAlerts: checked },
+                          })
+                        }
+                        disabled={!isEditing}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded border border-slate-600">
+                      <div className="space-y-1">
+                        <span className="text-white font-medium">Sound Alerts</span>
+                        <p className="text-sm text-slate-400">Play sound for critical alerts</p>
                       </div>
+                      <Switch
+                        checked={profile.preferences.soundAlerts}
+                        onCheckedChange={(checked) =>
+                          setProfile({
+                            ...profile,
+                            preferences: { ...profile.preferences, soundAlerts: checked },
+                          })
+                        }
+                        disabled={!isEditing}
+                      />
                     </div>
                   </div>
                   <div className="space-y-4">
-                    <h4 className="text-white font-medium">Display</h4>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Eye className="w-4 h-4 text-slate-400" />
-                          <span className="text-white">Dark Mode</span>
-                        </div>
-                        <Switch
-                          checked={user.preferences.darkMode}
-                          onCheckedChange={(checked) =>
-                            setUser({
-                              ...user,
-                              preferences: { ...user.preferences, darkMode: checked },
-                            })
-                          }
-                          disabled={!isEditing}
-                        />
+                    <div className="flex items-center justify-between p-3 rounded border border-slate-600">
+                      <div className="space-y-1">
+                        <span className="text-white font-medium">Auto Refresh</span>
+                        <p className="text-sm text-slate-400">Automatically update data</p>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Clock className="w-4 h-4 text-slate-400" />
-                          <span className="text-white">Auto Refresh</span>
-                        </div>
-                        <Switch
-                          checked={user.preferences.autoRefresh}
-                          onCheckedChange={(checked) =>
-                            setUser({
-                              ...user,
-                              preferences: { ...user.preferences, autoRefresh: checked },
-                            })
-                          }
-                          disabled={!isEditing}
-                        />
-                      </div>
-                      {user.preferences.autoRefresh && (
-                        <div className="space-y-2">
-                          <Label htmlFor="refreshInterval" className="text-slate-300">
-                            Refresh Interval (seconds)
-                          </Label>
-                          <Select
-                            value={user.preferences.refreshInterval.toString()}
-                            onValueChange={(value) =>
-                              setUser({
-                                ...user,
-                                preferences: { ...user.preferences, refreshInterval: Number.parseInt(value) },
-                              })
-                            }
-                            disabled={!isEditing}
-                          >
-                            <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white disabled:opacity-50">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-slate-800 border-slate-700">
-                              <SelectItem value="10" className="text-white">
-                                10 seconds
-                              </SelectItem>
-                              <SelectItem value="30" className="text-white">
-                                30 seconds
-                              </SelectItem>
-                              <SelectItem value="60" className="text-white">
-                                1 minute
-                              </SelectItem>
-                              <SelectItem value="300" className="text-white">
-                                5 minutes
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
+                      <Switch
+                        checked={profile.preferences.autoRefresh}
+                        onCheckedChange={(checked) =>
+                          setProfile({
+                            ...profile,
+                            preferences: { ...profile.preferences, autoRefresh: checked },
+                          })
+                        }
+                        disabled={!isEditing}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="refreshInterval" className="text-slate-300">
+                        Refresh Interval (seconds)
+                      </Label>
+                      <Select
+                        value={profile.preferences.refreshInterval.toString()}
+                        onValueChange={(value) =>
+                          setProfile({
+                            ...profile,
+                            preferences: { ...profile.preferences, refreshInterval: parseInt(value) },
+                          })
+                        }
+                        disabled={!isEditing || !profile.preferences.autoRefresh}
+                      >
+                        <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white disabled:opacity-50">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-slate-800 border-slate-700">
+                          <SelectItem value="15" className="text-white">
+                            15 seconds
+                          </SelectItem>
+                          <SelectItem value="30" className="text-white">
+                            30 seconds
+                          </SelectItem>
+                          <SelectItem value="60" className="text-white">
+                            1 minute
+                          </SelectItem>
+                          <SelectItem value="300" className="text-white">
+                            5 minutes
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                 </div>
@@ -375,100 +486,69 @@ export default function ProfilePage() {
             </Card>
           </div>
 
-          {/* Permissions & Security */}
+          {/* Account Info Sidebar */}
           <div className="space-y-6">
             <Card className="bg-slate-800/50 border-slate-700">
               <CardHeader>
                 <CardTitle className="text-white flex items-center space-x-2">
                   <Shield className="w-5 h-5" />
-                  <span>Permissions</span>
+                  <span>Account Info</span>
                 </CardTitle>
-                <CardDescription className="text-slate-400">Your current access level and permissions</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Eye className="w-4 h-4 text-slate-400" />
-                      <span className="text-white">View Dashboard</span>
-                    </div>
-                    <Badge
-                      variant="secondary"
-                      className={
-                        user.permissions.view
-                          ? "bg-green-500/10 text-green-400 border-green-500/20"
-                          : "bg-red-500/10 text-red-400 border-red-500/20"
-                      }
-                    >
-                      {user.permissions.view ? "Granted" : "Denied"}
-                    </Badge>
+                  <div className="flex items-center space-x-2">
+                    <User className="w-4 h-4 text-slate-400" />
+                    <span className="text-sm text-slate-300">User ID</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Shield className="w-4 h-4 text-slate-400" />
-                      <span className="text-white">Approve Recommendations</span>
-                    </div>
-                    <Badge
-                      variant="secondary"
-                      className={
-                        user.permissions.approve
-                          ? "bg-green-500/10 text-green-400 border-green-500/20"
-                          : "bg-red-500/10 text-red-400 border-red-500/20"
-                      }
-                    >
-                      {user.permissions.approve ? "Granted" : "Denied"}
-                    </Badge>
+                  <p className="text-xs text-slate-500 break-all">{user.id}</p>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="w-4 h-4 text-slate-400" />
+                    <span className="text-sm text-slate-300">Account Created</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Settings className="w-4 h-4 text-slate-400" />
-                      <span className="text-white">Configure System</span>
-                    </div>
-                    <Badge
-                      variant="secondary"
-                      className={
-                        user.permissions.configure
-                          ? "bg-green-500/10 text-green-400 border-green-500/20"
-                          : "bg-red-500/10 text-red-400 border-red-500/20"
-                      }
-                    >
-                      {user.permissions.configure ? "Granted" : "Denied"}
-                    </Badge>
+                  <p className="text-xs text-slate-500">
+                    {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "Unknown"}
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <Mail className="w-4 h-4 text-slate-400" />
+                    <span className="text-sm text-slate-300">Email Verified</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Shield className="w-4 h-4 text-red-400" />
-                      <span className="text-white">Emergency Override</span>
-                    </div>
-                    <Badge
-                      variant="secondary"
-                      className={
-                        user.permissions.emergency
-                          ? "bg-green-500/10 text-green-400 border-green-500/20"
-                          : "bg-red-500/10 text-red-400 border-red-500/20"
-                      }
-                    >
-                      {user.permissions.emergency ? "Granted" : "Denied"}
-                    </Badge>
-                  </div>
+                  <Badge variant="secondary" className="bg-green-500/10 text-green-400 border-green-500/20">
+                    {user.emailAddresses?.[0]?.verification?.status === "verified" ? "Verified" : "Pending"}
+                  </Badge>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="bg-slate-800/50 border-slate-700">
               <CardHeader>
-                <CardTitle className="text-white">Account Security</CardTitle>
+                <CardTitle className="text-white flex items-center space-x-2">
+                  <Eye className="w-5 h-5" />
+                  <span>Permissions</span>
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <Button variant="outline" className="w-full border-slate-600 text-slate-300 bg-transparent">
-                  Change Password
-                </Button>
-                <Button variant="outline" className="w-full border-slate-600 text-slate-300 bg-transparent">
-                  Two-Factor Authentication
-                </Button>
-                <Button variant="outline" className="w-full border-slate-600 text-slate-300 bg-transparent">
-                  Download Activity Log
-                </Button>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  {Object.entries(profile.permissions).map(([key, value]) => (
+                    <div key={key} className="flex items-center justify-between">
+                      <span className="text-sm text-slate-300 capitalize">{key}</span>
+                      <Badge
+                        variant="secondary"
+                        className={
+                          value
+                            ? "bg-green-500/10 text-green-400 border-green-500/20"
+                            : "bg-red-500/10 text-red-400 border-red-500/20"
+                        }
+                      >
+                        {value ? "Granted" : "Denied"}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </div>
