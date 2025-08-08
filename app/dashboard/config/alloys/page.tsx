@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -16,85 +16,107 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Plus, Edit, Trash2, Copy, Settings, Check, X } from "lucide-react"
+import { Plus, Edit, Trash2, Copy, Settings, Check, X, RefreshCcw, AlertCircle } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
+import { AlloyConfig } from "@/types/alloy"
 
-type ElementSpec = {
-  min: number
-  max: number
-  target: number
-}
-
-type AlloyGrade = {
-  id: string
-  name: string
-  category: string
-  elements: Record<string, ElementSpec>
-  applications: string[]
-  status: string
-}
-
-const initialAlloyGrades: AlloyGrade[] = [
-  {
-    id: "AISI-4140",
-    name: "AISI 4140",
-    category: "Alloy Steel",
-    elements: {
-      C: { min: 0.38, max: 0.43, target: 0.4 },
-      Mn: { min: 0.75, max: 1.0, target: 0.85 },
-      P: { min: 0.0, max: 0.035, target: 0.02 },
-      S: { min: 0.0, max: 0.04, target: 0.025 },
-      Si: { min: 0.15, max: 0.35, target: 0.25 },
-      Cr: { min: 0.8, max: 1.1, target: 0.95 },
-      Mo: { min: 0.15, max: 0.25, target: 0.2 },
-    },
-    applications: ["Automotive", "Machinery", "Tools"],
-    status: "active",
-  },
-  {
-    id: "AISI-1045",
-    name: "AISI 1045",
-    category: "Carbon Steel",
-    elements: {
-      C: { min: 0.43, max: 0.5, target: 0.45 },
-      Mn: { min: 0.6, max: 0.9, target: 0.75 },
-      P: { min: 0.0, max: 0.04, target: 0.025 },
-      S: { min: 0.0, max: 0.05, target: 0.03 },
-      Si: { min: 0.15, max: 0.35, target: 0.25 },
-    },
-    applications: ["Construction", "General Purpose"],
-    status: "active",
-  },
-  {
-    id: "AISI-4340",
-    name: "AISI 4340",
-    category: "Alloy Steel",
-    elements: {
-      C: { min: 0.38, max: 0.43, target: 0.4 },
-      Mn: { min: 0.6, max: 0.8, target: 0.7 },
-      P: { min: 0.0, max: 0.035, target: 0.02 },
-      S: { min: 0.0, max: 0.04, target: 0.025 },
-      Si: { min: 0.15, max: 0.35, target: 0.25 },
-      Cr: { min: 0.7, max: 0.9, target: 0.8 },
-      Ni: { min: 1.65, max: 2.0, target: 1.8 },
-      Mo: { min: 0.2, max: 0.3, target: 0.25 },
-    },
-    applications: ["Aerospace", "High Strength"],
-    status: "active",
-  },
-]
+// Use our defined type from types/alloy.ts
+type AlloyGrade = AlloyConfig
 
 export default function AlloySpecificationPage() {
-  const [alloyGrades, setAlloyGrades] = useState<AlloyGrade[]>(initialAlloyGrades)
+  const { toast } = useToast()
+  const [alloyGrades, setAlloyGrades] = useState<AlloyGrade[]>([])
   const [selectedGrade, setSelectedGrade] = useState<AlloyGrade | null>(null)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [tempGrade, setTempGrade] = useState<Partial<AlloyGrade>>({})
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   
   // Form states
   const [newGradeName, setNewGradeName] = useState("")
   const [newGradeCategory, setNewGradeCategory] = useState("")
   const [newApplication, setNewApplication] = useState("")
+  const [categories, setCategories] = useState<string[]>([])
+
+  // Fetch alloys from API
+  useEffect(() => {
+    fetchAlloys()
+    fetchCategories()
+  }, [])
+
+  const fetchAlloys = async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      const response = await fetch('/api/alloys')
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch alloys')
+      }
+      
+      const data = await response.json()
+      console.log('API Response - Alloys:', data)
+      
+      // If data exists but doesn't match our expected format, we need to transform it
+      if (data && Array.isArray(data)) {
+        const formattedData = data.map(alloy => {
+          // Transform the elements structure if needed
+          if (alloy.elements && typeof alloy.elements === 'object') {
+            // Ensure each element has min, max, target
+            Object.keys(alloy.elements).forEach(element => {
+              if (!alloy.elements[element].min && alloy.elements[element].min !== 0) {
+                alloy.elements[element].min = 0;
+              }
+              if (!alloy.elements[element].max && alloy.elements[element].max !== 0) {
+                alloy.elements[element].max = 1;
+              }
+              if (!alloy.elements[element].target && alloy.elements[element].target !== 0) {
+                alloy.elements[element].target = 
+                  (alloy.elements[element].min + alloy.elements[element].max) / 2;
+              }
+            });
+          }
+          // Ensure applications is always an array
+          if (!alloy.applications) {
+            alloy.applications = [];
+          }
+          // Ensure ID is set
+          if (!alloy.id && alloy._id) {
+            alloy.id = alloy._id.toString();
+          }
+          return alloy;
+        });
+        setAlloyGrades(formattedData);
+      } else {
+        setAlloyGrades([]);
+      }
+    } catch (err) {
+      setError('Error loading alloy data')
+      console.error(err)
+      toast({
+        title: "Error",
+        description: "Could not load alloy data. Please try again later.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('/api/alloys/categories')
+      
+      if (response.ok) {
+        const data = await response.json()
+        setCategories(data)
+      }
+    } catch (err) {
+      console.error('Error fetching categories', err)
+    }
+  }
 
   // Initialize a new grade or edit existing one
   const initializeGrade = (grade?: AlloyGrade) => {
@@ -127,60 +149,175 @@ export default function AlloySpecificationPage() {
           target: value,
           min: prev.elements?.[element]?.min ?? 0,
           max: prev.elements?.[element]?.max ?? 0,
-        } as ElementSpec
+        }
       }
     }))
   }
 
   // Save grade (create or update)
-  const saveGrade = () => {
+  const saveGrade = async () => {
     if (!tempGrade.name || !tempGrade.category) return
-
-    if (isEditMode && tempGrade.id) {
-      setAlloyGrades(alloyGrades.map(grade =>
-        grade.id === tempGrade.id ? tempGrade as AlloyGrade : grade
-      ));
-      setSelectedGrade(tempGrade as AlloyGrade);
-    } else {
-      const newGrade = {
-        ...tempGrade,
-        id: `custom-${Date.now()}`,
-        name: newGradeName,
-        category: newGradeCategory,
-        status: "active"
-      } as AlloyGrade;
-      setAlloyGrades([...alloyGrades, newGrade]);
-      setSelectedGrade(newGrade);
-    }
     
-    setIsEditMode(false)
-    setTempGrade({})
-    setNewGradeName("")
-    setNewGradeCategory("")
-    setIsCreateDialogOpen(false)
+    try {
+      setIsLoading(true)
+      
+      if (isEditMode && tempGrade.id) {
+        // Update existing alloy
+        const response = await fetch(`/api/alloys/${tempGrade.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(tempGrade),
+        })
+        
+        if (!response.ok) {
+          throw new Error('Failed to update alloy')
+        }
+        
+        toast({
+          title: "Success",
+          description: "Alloy updated successfully",
+        })
+        
+        // Update the selected grade immediately with the new values
+        setSelectedGrade(tempGrade as AlloyGrade)
+        
+        // Update the alloy grades list
+        setAlloyGrades(prev => prev.map(grade => 
+          grade.id === tempGrade.id ? tempGrade as AlloyGrade : grade
+        ))
+        
+      } else {
+        // Create new alloy
+        const newGrade = {
+          ...tempGrade,
+          id: tempGrade.id || `custom-${Date.now()}`,
+          name: newGradeName || tempGrade.name,
+          category: newGradeCategory || tempGrade.category,
+          status: "active"
+        };
+        
+        const response = await fetch('/api/alloys', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newGrade),
+        })
+        
+        if (!response.ok) {
+          throw new Error('Failed to create alloy')
+        }
+        
+        toast({
+          title: "Success",
+          description: "Alloy created successfully",
+        })
+        
+        // Add the new grade to the list and select it
+        setAlloyGrades(prev => [...prev, newGrade as AlloyGrade])
+        setSelectedGrade(newGrade as AlloyGrade)
+      }
+    } catch (error) {
+      console.error('Error saving alloy:', error)
+      toast({
+        title: "Error",
+        description: "Failed to save alloy. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoading(false)
+      setIsEditMode(false)
+      setTempGrade({})
+      setNewGradeName("")
+      setNewGradeCategory("")
+      setIsCreateDialogOpen(false)
+    }
   }
 
   // Clone a grade
-  const cloneGrade = () => {
+  const cloneGrade = async () => {
     if (!selectedGrade) return
     
-    const clonedGrade = {
-      ...selectedGrade,
-      id: `clone-${Date.now()}`,
-      name: `${selectedGrade.name} (Copy)`
+    try {
+      setIsLoading(true)
+      
+      const clonedGrade = {
+        ...selectedGrade,
+        id: `clone-${Date.now()}`,
+        name: `${selectedGrade.name} (Copy)`
+      }
+      
+      // Remove _id if it exists
+      delete clonedGrade._id
+      
+      const response = await fetch('/api/alloys', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(clonedGrade),
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to clone alloy')
+      }
+      
+      toast({
+        title: "Success",
+        description: "Alloy cloned successfully",
+      })
+      
+      // Add the cloned grade to the list and select it
+      setAlloyGrades(prev => [...prev, clonedGrade as AlloyGrade])
+      setSelectedGrade(clonedGrade as AlloyGrade)
+    } catch (error) {
+      console.error('Error cloning alloy:', error)
+      toast({
+        title: "Error", 
+        description: "Failed to clone alloy. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoading(false)
     }
-    
-    setAlloyGrades([...alloyGrades, clonedGrade])
-    setSelectedGrade(clonedGrade)
   }
 
   // Delete a grade
-  const deleteGrade = () => {
+  const deleteGrade = async () => {
     if (!selectedGrade) return
     
-    setAlloyGrades(alloyGrades.filter(grade => grade.id !== selectedGrade.id))
-    setSelectedGrade(null)
-    setIsDeleteDialogOpen(false)
+    try {
+      setIsLoading(true)
+      
+      const response = await fetch(`/api/alloys/${selectedGrade.id}`, {
+        method: 'DELETE',
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete alloy')
+      }
+      
+      toast({
+        title: "Success",
+        description: "Alloy deleted successfully",
+      })
+      
+      // Remove the deleted grade from the list
+      setAlloyGrades(prev => prev.filter(grade => grade.id !== selectedGrade.id))
+      setSelectedGrade(null)
+      setIsDeleteDialogOpen(false)
+    } catch (error) {
+      console.error('Error deleting alloy:', error)
+      toast({
+        title: "Error",
+        description: "Failed to delete alloy. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   // Add new application
@@ -290,18 +427,58 @@ export default function AlloySpecificationPage() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Grade List */}
           <Card className="bg-slate-800/50 border-slate-700">
-            <CardHeader>
-              <CardTitle className="text-white">Alloy Grades</CardTitle>
-              <CardDescription className="text-slate-400">Manage alloy specifications and tolerances</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-white">Alloy Grades</CardTitle>
+                <CardDescription className="text-slate-400">Manage alloy specifications and tolerances</CardDescription>
+              </div>
+              {isLoading && (
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled>
+                  <RefreshCcw className="h-4 w-4 animate-spin" />
+                </Button>
+              )}
             </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {alloyGrades.map((grade) => (
-                  <div
-                    key={grade.id}
-                    className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                      selectedGrade?.id === grade.id
-                        ? "bg-blue-500/20 border-blue-500/30"
+            <CardContent className="max-h-[calc(100vh-16rem)] overflow-y-auto">
+              {error ? (
+                <div className="flex flex-col items-center justify-center p-6 text-center">
+                  <AlertCircle className="h-10 w-10 text-red-500 mb-2" />
+                  <p className="text-slate-300">{error}</p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-4 border-slate-600" 
+                    onClick={fetchAlloys}
+                  >
+                    Retry
+                  </Button>
+                </div>
+              ) : isLoading && alloyGrades.length === 0 ? (
+                <div className="space-y-3">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div 
+                      key={i} 
+                      className="p-3 rounded-lg border border-slate-700/50 bg-slate-800/30 animate-pulse h-16"
+                    />
+                  ))}
+                </div>
+              ) : alloyGrades.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-6 text-center">
+                  <p className="text-slate-300">No alloy grades found</p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-4 border-slate-600"
+                    onClick={() => setIsCreateDialogOpen(true)}
+                  >
+                    Create Your First Grade
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3 pr-2">
+                  {alloyGrades.map((grade) => (
+                    <div
+                      key={grade.id}
+                      className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                        selectedGrade?.id === grade.id
+                          ? "bg-blue-500/20 border-blue-500/30"
                         : "bg-slate-700/30 border-slate-600 hover:bg-slate-700/50"
                     }`}
                     onClick={() => setSelectedGrade(grade)}
@@ -322,7 +499,8 @@ export default function AlloySpecificationPage() {
                     </div>
                   </div>
                 ))}
-              </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -347,18 +525,28 @@ export default function AlloySpecificationPage() {
                             <SelectValue placeholder="Select category" />
                           </SelectTrigger>
                           <SelectContent className="bg-slate-800 border-slate-700">
-                            <SelectItem value="Carbon Steel" className="text-white">
-                              Carbon Steel
-                            </SelectItem>
-                            <SelectItem value="Alloy Steel" className="text-white">
-                              Alloy Steel
-                            </SelectItem>
-                            <SelectItem value="Stainless Steel" className="text-white">
-                              Stainless Steel
-                            </SelectItem>
-                            <SelectItem value="Tool Steel" className="text-white">
-                              Tool Steel
-                            </SelectItem>
+                            {categories.length > 0 ? (
+                              categories.map((category) => (
+                                <SelectItem key={category} value={category} className="text-white">
+                                  {category}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <>
+                                <SelectItem value="Carbon Steel" className="text-white">
+                                  Carbon Steel
+                                </SelectItem>
+                                <SelectItem value="Alloy Steel" className="text-white">
+                                  Alloy Steel
+                                </SelectItem>
+                                <SelectItem value="Stainless Steel" className="text-white">
+                                  Stainless Steel
+                                </SelectItem>
+                                <SelectItem value="Tool Steel" className="text-white">
+                                  Tool Steel
+                                </SelectItem>
+                              </>
+                            )}
                           </SelectContent>
                         </Select>
                       </CardDescription>
