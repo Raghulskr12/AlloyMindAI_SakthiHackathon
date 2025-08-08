@@ -16,9 +16,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { SidebarTrigger } from "@/components/ui/sidebar"
-import { Separator } from "@/components/ui/separator"
-import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb"
 import { Plus, Edit, Trash2, Copy, Settings, Check, X } from "lucide-react"
 
 type ElementSpec = {
@@ -207,17 +204,11 @@ export default function AlloySpecificationPage() {
 
   return (
     <>
-      <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-        <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mr-2 h-4" />
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbPage>Alloy Specifications</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-        <div className="ml-auto">
+      <div className="flex h-16 shrink-0 items-center gap-2 border-b border-slate-700 px-4 bg-slate-900">
+        <div className="flex-1 flex items-center">
+          <h1 className="text-xl font-semibold text-white">Alloy Specifications</h1>
+        </div>
+        <div className="flex items-center space-x-4">
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-blue-600 hover:bg-blue-700">
@@ -293,7 +284,7 @@ export default function AlloySpecificationPage() {
             </DialogContent>
           </Dialog>
         </div>
-      </header>
+      </div>
 
       <div className="flex-1 space-y-6 p-6">
         <div className="grid lg:grid-cols-3 gap-6">

@@ -87,23 +87,7 @@ export default function PerformancePage() {
 
   return (
     <>
-      <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-        <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mr-2 h-4" />
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbPage>Model Performance</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-        <div className="ml-auto">
-          <Badge variant="secondary" className="bg-green-500/10 text-green-400 border-green-500/20">
-            <Brain className="w-3 h-3 mr-1" />
-            Model v2.1.3 Active
-          </Badge>
-        </div>
-      </header>
+
 
       <div className="flex-1 space-y-6 p-6">
         {/* Key Metrics */}

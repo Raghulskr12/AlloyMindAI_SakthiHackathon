@@ -116,25 +116,7 @@ export default function MobileAlertsPage() {
 
   return (
     <>
-      <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-        <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mr-2 h-4" />
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbPage>Mobile Alert Console</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-        <div className="ml-auto flex items-center space-x-2">
-          <Badge variant="secondary" className="bg-red-500/10 text-red-400 border-red-500/20">
-            {criticalCount} Critical
-          </Badge>
-          <Badge variant="secondary" className="bg-blue-500/10 text-blue-400 border-blue-500/20">
-            {unacknowledgedCount} Unread
-          </Badge>
-        </div>
-      </header>
+
 
       <div className="flex-1 space-y-6 p-6">
         {/* Mobile Interface Preview */}

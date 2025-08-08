@@ -103,15 +103,8 @@ export default function HistoryPage() {
 
   return (
     <div className="flex-1 space-y-6 p-6 bg-slate-900 min-h-screen">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <SidebarTrigger />
-          <div>
-            <h1 className="text-3xl font-bold text-white">Decision History</h1>
-            <p className="text-slate-400">Interactive timeline of AI recommendations and outcomes</p>
-          </div>
-        </div>
+      {/* Export Buttons */}
+      <div className="flex justify-end mb-6">
         <div className="flex items-center space-x-2">
           <Button variant="outline" className="border-slate-600 text-slate-300 bg-transparent">
             <Download className="w-4 h-4 mr-2" />

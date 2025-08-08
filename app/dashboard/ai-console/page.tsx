@@ -62,16 +62,7 @@ export default function AIConsole() {
 
   return (
     <div className="flex-1 space-y-6 p-6 bg-slate-900 min-h-screen">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center space-x-4">
-          <SidebarTrigger />
-          <div>
-            <h1 className="text-3xl font-bold text-white">Alloy Optimization Console</h1>
-            <p className="text-slate-400">AI-powered alloy composition and cost optimization</p>
-          </div>
-        </div>
-      </div>
+
       {/* Header with Batch Info */}
       <Card className="bg-slate-800/50 border-slate-700 mb-8">
         <CardContent>
