@@ -58,13 +58,13 @@ const elements = [
 ]
 
 const temperatureTrend = [
-  { time: '10:00', temp: 1620, target: 1650 },
-  { time: '10:15', temp: 1635, target: 1650 },
-  { time: '10:30', temp: 1648, target: 1650 },
-  { time: '10:45', temp: 1652, target: 1650 },
-  { time: '11:00', temp: 1650, target: 1650 },
-  { time: '11:15', temp: 1649, target: 1650 },
-  { time: '11:30', temp: 1651, target: 1650 }
+  { time: '10:00', temp: 1620 },
+  { time: '10:15', temp: 1635 },
+  { time: '10:30', temp: 1648 },
+  { time: '10:45', temp: 1652 },
+  { time: '11:00', temp: 1650 },
+  { time: '11:15', temp: 1649 },
+  { time: '11:30', temp: 1651 }
 ]
 
 const costScenarios = [
@@ -104,16 +104,24 @@ const anomalies = [
   { id: 4, type: "equipment", severity: "medium", issue: "Furnace door seal", related: ["temp-loss", "efficiency"] }
 ]
 
-export default function DashboardPage() {
-  const [selectedElement, setSelectedElement] = useState<any>(null)
+const furnaceZones = [
+  { zone: "Zone 1", temp: 1650, status: "optimal", efficiency: 96, pressure: 2.1 },
+  { zone: "Zone 2", temp: 1645, status: "optimal", efficiency: 94, pressure: 2.0 },
+  { zone: "Zone 3", temp: 1655, status: "warning", efficiency: 88, pressure: 2.3 },
+  { zone: "Zone 4", temp: 1640, status: "optimal", efficiency: 97, pressure: 1.9 }
+]
 
-  const getElementStatus = (element: any) => {
+export default function DashboardPage() {
+  const [selectedElement, setSelectedElement] = useState(null)
+  const [selectedZone, setSelectedZone] = useState(null)
+
+  const getElementStatus = (element) => {
     if (element.current >= element.min && element.current <= element.max) return "good"
     if (element.current >= element.min * 0.95 && element.current <= element.max * 1.05) return "warning"
     return "critical"
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status) => {
     switch (status) {
       case "good": return "bg-green-500/20 text-green-400 border-green-500/30"
       case "warning": return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
@@ -122,7 +130,7 @@ export default function DashboardPage() {
     }
   }
 
-  const getTrendIcon = (trend: string) => {
+  const getTrendIcon = (trend) => {
     switch (trend) {
       case "up": return <TrendingUp className="w-3 h-3 text-green-400" />
       case "down": return <TrendingDown className="w-3 h-3 text-red-400" />
@@ -210,7 +218,7 @@ export default function DashboardPage() {
               <div className="grid grid-cols-4 gap-3">
                 {elements.map((element) => {
                   const status = getElementStatus(element)
-                  const deviation = ((element.current - element.target) / element.target * 100)
+                  const deviation = ((element.current - element.target) / element.target * 100).toFixed(1)
                   return (
                     <div
                       key={element.symbol}
@@ -226,7 +234,7 @@ export default function DashboardPage() {
                       <div className="text-xs opacity-75 mb-1">Target: {element.target}%</div>
                       <div className="flex items-center text-xs">
                         <span className={`${deviation > 0 ? 'text-red-400' : 'text-green-400'}`}>
-                          {deviation > 0 ? '▲' : '▼'} {Math.abs(deviation).toFixed(1)}%
+                          {deviation > 0 ? '▲' : '▼'} {Math.abs(deviation)}%
                         </span>
                       </div>
                     </div>
@@ -237,7 +245,7 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* B. Simplified Furnace Temperature Control */}
+        {/* B. Advanced Furnace Temperature Control */}
         <Card className="bg-slate-800/50 border-slate-700">
           <CardHeader>
             <CardTitle className="text-white flex items-center space-x-2">
@@ -327,6 +335,25 @@ export default function DashboardPage() {
                 </LineChart>
               </ResponsiveContainer>
             </div>
+
+            {/* Zone Status Grid */}
+            <div className="grid grid-cols-2 gap-2">
+              {furnaceZones.map((zone) => (
+                <div
+                  key={zone.zone}
+                  className={`p-2 rounded-lg cursor-pointer transition-all hover:scale-105 ${
+                    zone.status === 'optimal' ? 'bg-green-500/10 border border-green-500/30' :
+                    zone.status === 'warning' ? 'bg-yellow-500/10 border border-yellow-500/30' :
+                    'bg-red-500/10 border border-red-500/30'
+                  }`}
+                  onClick={() => setSelectedZone(zone)}
+                >
+                  <div className="text-xs font-medium text-white">{zone.zone}</div>
+                  <div className="text-sm font-mono text-orange-400">{zone.temp}°C</div>
+                  <div className="text-xs text-slate-400">{zone.efficiency}% eff</div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -392,6 +419,147 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* D. 3D Furnace Visualization */}
+        <div className="xl:col-span-2">
+          <Card className="bg-slate-800/50 border-slate-700 h-full">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center space-x-2">
+                <Gauge className="w-5 h-5" />
+                <span>Advanced Furnace Monitoring</span>
+              </CardTitle>
+              <CardDescription className="text-slate-400">
+                3D temperature mapping with real-time analytics
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* 3D Furnace Visual */}
+                <div className="relative">
+                  <div className="w-full h-64 bg-gradient-to-br from-slate-900 via-orange-900/20 to-red-900/30 rounded-xl relative overflow-hidden border border-slate-700/50">
+                    {/* Furnace structure */}
+                    <div className="absolute inset-4 bg-gradient-to-b from-orange-800/30 to-red-800/50 rounded-lg border-2 border-orange-500/30">
+                      {/* Temperature zones */}
+                      {furnaceZones.map((zone, index) => (
+                        <div
+                          key={zone.zone}
+                          className={`absolute cursor-pointer group transition-all duration-300 hover:scale-110 ${
+                            index === 0 ? 'top-4 left-4 w-16 h-12' :
+                            index === 1 ? 'top-4 right-4 w-16 h-12' :
+                            index === 2 ? 'bottom-4 left-4 w-16 h-12' :
+                            'bottom-4 right-4 w-16 h-12'
+                          }`}
+                          onClick={() => setSelectedZone(zone)}
+                        >
+                          <div className={`w-full h-full rounded-lg flex items-center justify-center text-xs font-bold transition-all ${
+                            zone.status === 'optimal' ? 'bg-green-500/40 border-2 border-green-400 text-green-200' :
+                            zone.status === 'warning' ? 'bg-yellow-500/40 border-2 border-yellow-400 text-yellow-200' :
+                            'bg-red-500/40 border-2 border-red-400 text-red-200'
+                          } ${selectedZone?.zone === zone.zone ? 'ring-2 ring-white/50' : ''}`}>
+                            <div className="text-center">
+                              <div className="text-xs">{zone.zone}</div>
+                              <div className="font-mono">{zone.temp}°</div>
+                            </div>
+                          </div>
+                          
+                          {/* Enhanced tooltip */}
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-slate-800/95 backdrop-blur-sm p-3 rounded-lg text-xs text-white opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap z-20 border border-slate-600/50">
+                            <div className="font-bold text-orange-400">{zone.zone}</div>
+                            <div className="space-y-1 mt-1">
+                              <div className="flex justify-between">
+                                <span className="text-slate-400">Temperature:</span>
+                                <span className="text-orange-300">{zone.temp}°C</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-slate-400">Efficiency:</span>
+                                <span className="text-green-300">{zone.efficiency}%</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-slate-400">Pressure:</span>
+                                <span className="text-blue-300">{zone.pressure} bar</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {/* Central melt pool */}
+                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-gradient-radial from-orange-400/60 via-red-500/40 to-transparent rounded-full animate-pulse">
+                        <div className="w-full h-full bg-gradient-to-br from-yellow-400/20 to-red-600/40 rounded-full animate-spin" style={{animationDuration: '8s'}} />
+                      </div>
+                    </div>
+                    
+                    {/* Animated heat waves */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-transparent via-orange-500/10 to-transparent animate-pulse" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-500/5 to-transparent animate-pulse" style={{animationDelay: '1s'}} />
+                  </div>
+                </div>
+
+                {/* Zone Details Panel */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    {furnaceZones.map((zone) => (
+                      <div
+                        key={zone.zone}
+                        className={`p-3 rounded-lg cursor-pointer transition-all hover:scale-105 border ${
+                          selectedZone?.zone === zone.zone ? 'ring-2 ring-blue-400' : ''
+                        } ${
+                          zone.status === 'optimal' ? 'bg-green-500/10 border-green-500/30 hover:bg-green-500/20' :
+                          zone.status === 'warning' ? 'bg-yellow-500/10 border-yellow-500/30 hover:bg-yellow-500/20' :
+                          'bg-red-500/10 border-red-500/30 hover:bg-red-500/20'
+                        }`}
+                        onClick={() => setSelectedZone(zone)}
+                      >
+                        <div className="text-sm font-medium text-white mb-1">{zone.zone}</div>
+                        <div className="text-lg font-mono text-orange-400 mb-1">{zone.temp}°C</div>
+                        <div className="flex justify-between text-xs text-slate-400">
+                          <span>{zone.efficiency}% eff</span>
+                          <span>{zone.pressure} bar</span>
+                        </div>
+                        <div className="mt-2">
+                          <Progress 
+                            value={zone.efficiency} 
+                            className="h-1"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {selectedZone && (
+                    <div className="bg-slate-700/30 p-4 rounded-lg border border-slate-600/50">
+                      <h4 className="text-white font-medium mb-3">{selectedZone.zone} Details</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Current Temperature:</span>
+                          <span className="text-orange-400 font-mono">{selectedZone.temp}°C</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Operating Efficiency:</span>
+                          <span className="text-green-400">{selectedZone.efficiency}%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Pressure Reading:</span>
+                          <span className="text-blue-400">{selectedZone.pressure} bar</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Status:</span>
+                          <Badge className={`${
+                            selectedZone.status === 'optimal' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
+                            selectedZone.status === 'warning' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+                            'bg-red-500/20 text-red-400 border-red-500/30'
+                          }`}>
+                            {selectedZone.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Anomaly Constellation Map */}
