@@ -1,0 +1,142 @@
+{
+  "lightgbm": {
+    "C_Element_Config": {
+      "test_rmse": 0.020418268668629422,
+      "test_mae": 0.014963446974793978,
+      "test_r2": 0.9999093680819711,
+      "device_used": "GPU"
+    },
+    "Si_Element_Config": {
+      "test_rmse": 0.025174695950378398,
+      "test_mae": 0.01879655056858245,
+      "test_r2": 0.9998811794075626,
+      "device_used": "GPU"
+    },
+    "Mn_Element_Config": {
+      "test_rmse": 0.01540968161589043,
+      "test_mae": 0.009820614352018722,
+      "test_r2": 0.999921168226001,
+      "device_used": "GPU"
+    },
+    "P_Element_Config": {
+      "test_rmse": 0.0010237592059671528,
+      "test_mae": 0.0003432769182235106,
+      "test_r2": 0.9999870881579547,
+      "device_used": "GPU"
+    },
+    "S_Element_Config": {
+      "test_rmse": 2.408540825559273e-09,
+      "test_mae": 1.7650786160443476e-09,
+      "test_r2": 0.9999999999999983,
+      "device_used": "GPU"
+    },
+    "Cu_Element_Config": {
+      "test_rmse": 0.01299119969269704,
+      "test_mae": 0.00858654904185732,
+      "test_r2": 0.9999302469056509,
+      "device_used": "GPU"
+    },
+    "Mg_Element_Config": {
+      "test_rmse": 0.0010396173353171565,
+      "test_mae": 0.0002213507384543333,
+      "test_r2": 0.9999689258221947,
+      "device_used": "GPU"
+    }
+  },
+  "catboost": {
+    "C_Element_Config": {
+      "test_rmse": 0.04783971504402555,
+      "test_mae": 0.03590327464593054,
+      "test_r2": 0.9995024685815116,
+      "device_used": "GPU"
+    },
+    "Si_Element_Config": {
+      "test_rmse": 0.04383666614623786,
+      "test_mae": 0.03373510328580631,
+      "test_r2": 0.9996397215537199,
+      "device_used": "GPU"
+    },
+    "Mn_Element_Config": {
+      "test_rmse": 0.03632971167825422,
+      "test_mae": 0.026644192016833615,
+      "test_r2": 0.9995618348112809,
+      "device_used": "GPU"
+    },
+    "P_Element_Config": {
+      "test_rmse": 0.003110195916373991,
+      "test_mae": 0.0022924875919813803,
+      "test_r2": 0.9998808296930476,
+      "device_used": "GPU"
+    },
+    "S_Element_Config": {
+      "test_rmse": 0.0003531744246509045,
+      "test_mae": 0.00028233281885583464,
+      "test_r2": 0.999963728122073,
+      "device_used": "GPU"
+    },
+    "Cu_Element_Config": {
+      "test_rmse": 0.036339664207231906,
+      "test_mae": 0.026445204012095283,
+      "test_r2": 0.9994542084832603,
+      "device_used": "GPU"
+    },
+    "Mg_Element_Config": {
+      "test_rmse": 0.0019550073853191034,
+      "test_mae": 0.0015597526230409482,
+      "test_r2": 0.9998901122133714,
+      "device_used": "GPU"
+    }
+  },
+  "ensemble": {
+    "C_Element_Config": {
+      "rmse": 0.02722019127287301,
+      "mae": 0.02020316786767754,
+      "r2": 0.999838925909396
+    },
+    "Si_Element_Config": {
+      "rmse": 0.02595603018986365,
+      "mae": 0.019767331147265234,
+      "r2": 0.999873689403347
+    },
+    "Mn_Element_Config": {
+      "rmse": 0.019354666992113606,
+      "mae": 0.014211149579378954,
+      "r2": 0.9998756386650517
+    },
+    "P_Element_Config": {
+      "rmse": 0.0016575495437502492,
+      "mae": 0.0012415843873822318,
+      "r2": 0.9999661525776334
+    },
+    "S_Element_Config": {
+      "rmse": 0.00017658720571393349,
+      "mae": 0.00014116641786933998,
+      "r2": 0.9999909320311973
+    },
+    "Cu_Element_Config": {
+      "rmse": 0.020253879168178057,
+      "mae": 0.014657123279090935,
+      "r2": 0.9998304564038368
+    },
+    "Mg_Element_Config": {
+      "rmse": 0.0011067751230525425,
+      "mae": 0.0008343988192829943,
+      "r2": 0.999964781455868
+    }
+  },
+  "model_info": {
+    "target_columns": [
+      "C_Element_Config",
+      "Si_Element_Config",
+      "Mn_Element_Config",
+      "P_Element_Config",
+      "S_Element_Config",
+      "Cu_Element_Config",
+      "Mg_Element_Config"
+    ],
+    "ensemble_weights": [
+      0.5,
+      0.5
+    ]
+  }
+}

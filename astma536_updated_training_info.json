@@ -1,0 +1,154 @@
+{
+  "grade": "ASTMA536",
+  "version": "Updated Targets",
+  "target_specifications": {
+    "C": 3.4,
+    "Si": 2.6,
+    "Mn": 0.275,
+    "P": 0.4,
+    "S": 0.0075,
+    "Cu": 0.35,
+    "Mg": 0.05
+  },
+  "lightgbm": {
+    "C_Element_Config": {
+      "test_rmse": 0.2166217323318658,
+      "test_mae": 0.15359425504413407,
+      "test_r2": 0.9919204067627151,
+      "device_used": "GPU"
+    },
+    "Si_Element_Config": {
+      "test_rmse": 0.18504511297700113,
+      "test_mae": 0.12273810867645842,
+      "test_r2": 0.9936610074200148,
+      "device_used": "GPU"
+    },
+    "Mn_Element_Config": {
+      "test_rmse": 0.14983981138563052,
+      "test_mae": 0.09853296794693775,
+      "test_r2": 0.9922515422436733,
+      "device_used": "GPU"
+    },
+    "P_Element_Config": {
+      "test_rmse": 0.014686872395595596,
+      "test_mae": 0.00838854943284376,
+      "test_r2": 0.9974585450879087,
+      "device_used": "GPU"
+    },
+    "S_Element_Config": {
+      "test_rmse": 0.008101192138908553,
+      "test_mae": 0.003815473476894504,
+      "test_r2": 0.9878377847626221,
+      "device_used": "GPU"
+    },
+    "Cu_Element_Config": {
+      "test_rmse": 0.15181801933097924,
+      "test_mae": 0.10325637347671687,
+      "test_r2": 0.9943854754739453,
+      "device_used": "GPU"
+    },
+    "Mg_Element_Config": {
+      "test_rmse": 0.034229719186006057,
+      "test_mae": 0.019844470292007234,
+      "test_r2": 0.9730779666149874,
+      "device_used": "GPU"
+    }
+  },
+  "catboost": {
+    "C_Element_Config": {
+      "test_rmse": 0.16623334526396183,
+      "test_mae": 0.13378796465935644,
+      "test_r2": 0.9952420295860003,
+      "device_used": "GPU"
+    },
+    "Si_Element_Config": {
+      "test_rmse": 0.20473634767681284,
+      "test_mae": 0.15296687093883446,
+      "test_r2": 0.9922401217611648,
+      "device_used": "GPU"
+    },
+    "Mn_Element_Config": {
+      "test_rmse": 0.1698477131921868,
+      "test_mae": 0.13057784194902594,
+      "test_r2": 0.9900441065007737,
+      "device_used": "GPU"
+    },
+    "P_Element_Config": {
+      "test_rmse": 0.012490706189512694,
+      "test_mae": 0.007420684705432073,
+      "test_r2": 0.9981617788788786,
+      "device_used": "GPU"
+    },
+    "S_Element_Config": {
+      "test_rmse": 0.00782997750258817,
+      "test_mae": 0.0024887771653809973,
+      "test_r2": 0.9886384954123254,
+      "device_used": "GPU"
+    },
+    "Cu_Element_Config": {
+      "test_rmse": 0.10372199103213234,
+      "test_mae": 0.07849480456941668,
+      "test_r2": 0.9973793559868716,
+      "device_used": "GPU"
+    },
+    "Mg_Element_Config": {
+      "test_rmse": 0.014978064971807465,
+      "test_mae": 0.009841064106549535,
+      "test_r2": 0.9948451906668012,
+      "device_used": "GPU"
+    }
+  },
+  "ensemble": {
+    "C_Element_Config": {
+      "rmse": 0.16433938493163683,
+      "mae": 0.1279447389184252,
+      "r2": 0.9953498307254277
+    },
+    "Si_Element_Config": {
+      "rmse": 0.15702635448992186,
+      "mae": 0.11340850587709475,
+      "r2": 0.9954353224936814
+    },
+    "Mn_Element_Config": {
+      "rmse": 0.13291902947773304,
+      "mae": 0.10296502304039719,
+      "r2": 0.9939027337836673
+    },
+    "P_Element_Config": {
+      "rmse": 0.010656416723962843,
+      "mae": 0.007146667854860067,
+      "r2": 0.9986620306740487
+    },
+    "S_Element_Config": {
+      "rmse": 0.006725949440444342,
+      "mae": 0.0029096139045635774,
+      "r2": 0.9916165647102306
+    },
+    "Cu_Element_Config": {
+      "rmse": 0.09540627629064886,
+      "mae": 0.07287008321258809,
+      "r2": 0.9977827215693175
+    },
+    "Mg_Element_Config": {
+      "rmse": 0.021776279670453622,
+      "mae": 0.012507794673176384,
+      "r2": 0.9891039633118939
+    }
+  },
+  "model_info": {
+    "target_columns": [
+      "C_Element_Config",
+      "Si_Element_Config",
+      "Mn_Element_Config",
+      "P_Element_Config",
+      "S_Element_Config",
+      "Cu_Element_Config",
+      "Mg_Element_Config"
+    ],
+    "ensemble_weights": [
+      0.5,
+      0.5
+    ],
+    "grade": "ASTMA536"
+  }
+}
