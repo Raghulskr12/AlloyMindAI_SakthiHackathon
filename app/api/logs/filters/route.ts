@@ -1,35 +1,36 @@
-import { NextRequest, NextResponse } from 'next/server';
-import clientPromise from '@/lib/mongodb';
-import { getAuth } from '@clerk/nextjs/server';
+import { NextRequest, NextResponse } from 'next/server'
+import clientPromise from '@/lib/mongodb'
+import { auth } from '@clerk/nextjs/server'
 
-export async function GET(req: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const { userId } = getAuth(req);
-    
+    const { userId } = await auth()
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const client = await clientPromise;
-    const db = client.db('AlloyMindAI');
-    
-    // Get unique values for filters
+    const client = await clientPromise
+    const db = client.db('AlloyMindAI')
+    const collection = db.collection('Logs')
+
+    // Get distinct values for filters
     const [alloyGrades, operators, outcomes] = await Promise.all([
-      db.collection('Logs').distinct('alloyGrade'),
-      db.collection('Logs').distinct('operator'),
-      db.collection('Logs').distinct('outcome')
-    ]);
-    
+      collection.distinct('alloyGrade'),
+      collection.distinct('operator'),
+      collection.distinct('outcome')
+    ])
+
     return NextResponse.json({
-      alloyGrades: alloyGrades.filter(grade => grade && typeof grade === 'string'),
-      operators: operators.filter(op => op && typeof op === 'string'),
-      outcomes: outcomes.filter(outcome => outcome && typeof outcome === 'string')
-    });
+      alloyGrades: alloyGrades.sort(),
+      operators: operators.sort(),
+      outcomes: outcomes.sort()
+    })
+
   } catch (error) {
-    console.error('Database error:', error);
+    console.error('Error fetching log filters:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch filter options' }, 
+      { error: 'Failed to fetch filters' },
       { status: 500 }
-    );
+    )
   }
 }

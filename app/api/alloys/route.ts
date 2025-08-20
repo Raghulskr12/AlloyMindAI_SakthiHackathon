@@ -13,10 +13,16 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const client = await clientPromise;
+    // Add connection timeout handling
+    const client = await Promise.race([
+      clientPromise,
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database connection timeout')), 15000)
+      )
+    ]);
     
     // Use the correct database name with capital letters
-    const db = client.db('AlloyMindAI');
+    const db = (client as any).db('AlloyMindAI');
     
     // Parse query parameters for filtering
     const { searchParams } = new URL(req.url);
@@ -29,7 +35,7 @@ export async function GET(
     if (id) query.id = id;
     if (category) query.category = category;
     
-    const alloys = await db.collection<AlloyConfig>('AlloyConfig')
+    const alloys = await db.collection('AlloyConfig')
       .find(query)
       .sort({ name: 1 })
       .toArray();
@@ -37,9 +43,24 @@ export async function GET(
     return NextResponse.json(alloys);
   } catch (error) {
     console.error('Database error:', error);
+    
+    // Provide more specific error messages for GET requests
+    let errorMessage = 'Failed to fetch alloy configurations';
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.message.includes('timeout') || error.message.includes('ETIMEOUT')) {
+        errorMessage = 'Database connection timeout. Please refresh the page.';
+        statusCode = 503;
+      } else if (error.message.includes('connection')) {
+        errorMessage = 'Database connection failed. Please check your connection.';
+        statusCode = 503;
+      }
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to fetch alloy configurations' }, 
-      { status: 500 }
+      { error: errorMessage }, 
+      { status: statusCode }
     );
   }
 }
@@ -64,6 +85,14 @@ export async function POST(
       );
     }
 
+    // Add connection timeout handling
+    const client = await Promise.race([
+      clientPromise,
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database connection timeout')), 15000)
+      )
+    ]);
+
     // Create new alloy object without the _id field to avoid MongoDB type conflicts
     const newAlloy = {
       ...data,
@@ -76,8 +105,8 @@ export async function POST(
     // Remove _id if it exists in the data
     delete newAlloy._id;
 
-    const client = await clientPromise;
-    const db = client.db('AlloyMindAI');
+    const mongoClient = client as any;
+    const db = mongoClient.db('AlloyMindAI');
     
     // Check for duplicate ID
     const existing = await db.collection('AlloyConfig').findOne({ id: data.id });
@@ -96,9 +125,24 @@ export async function POST(
     );
   } catch (error) {
     console.error('Database error:', error);
+    
+    // Provide more specific error messages
+    let errorMessage = 'Failed to create alloy configuration';
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.message.includes('timeout') || error.message.includes('ETIMEOUT')) {
+        errorMessage = 'Database connection timeout. Please try again.';
+        statusCode = 503;
+      } else if (error.message.includes('connection')) {
+        errorMessage = 'Database connection failed. Please try again.';
+        statusCode = 503;
+      }
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to create alloy configuration' }, 
-      { status: 500 }
+      { error: errorMessage }, 
+      { status: statusCode }
     );
   }
 }

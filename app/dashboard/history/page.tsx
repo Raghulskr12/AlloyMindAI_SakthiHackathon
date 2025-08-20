@@ -20,7 +20,8 @@ import {
   RefreshCcw,
 } from "lucide-react"
 import { format } from "date-fns"
-import { LogEntry, LogFilters } from "@/types/log"
+import { AnalysisLog, LogFilters } from "@/types/log"
+import { LogService } from "@/lib/services/log-service"
 
 export default function HistoryPage() {
   const { toast } = useToast()
@@ -28,19 +29,16 @@ export default function HistoryPage() {
   const [filterGrade, setFilterGrade] = useState("all")
   const [filterOperator, setFilterOperator] = useState("all")
   const [filterOutcome, setFilterOutcome] = useState("all")
-  const [decisionHistory, setDecisionHistory] = useState<LogEntry[]>([])
-  const [filters, setFilters] = useState<LogFilters>({
-    alloyGrades: [],
-    operators: [],
-    outcomes: []
-  })
+  const [decisionHistory, setDecisionHistory] = useState<AnalysisLog[]>([])
+  const [availableGrades, setAvailableGrades] = useState<string[]>([])
+  const [availableOperators, setAvailableOperators] = useState<string[]>([])
+  const [availableOutcomes] = useState<string[]>(["approved", "rejected", "pending"])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Fetch logs from API
   useEffect(() => {
     fetchLogs()
-    fetchFilters()
   }, [])
 
   // Fetch logs when filters change
@@ -53,26 +51,24 @@ export default function HistoryPage() {
       setIsLoading(true)
       setError(null)
       
-      const params = new URLSearchParams()
-      if (filterGrade && filterGrade !== 'all') params.append('alloyGrade', filterGrade)
-      if (filterOperator && filterOperator !== 'all') params.append('operator', filterOperator)
-      if (filterOutcome && filterOutcome !== 'all') params.append('outcome', filterOutcome)
+      const filters: any = {}
+      if (filterGrade && filterGrade !== 'all') filters.alloyGrade = filterGrade
+      if (filterOperator && filterOperator !== 'all') filters.operator = filterOperator
+      if (filterOutcome && filterOutcome !== 'all') filters.outcome = filterOutcome
       if (selectedDate) {
-        const startDate = new Date(selectedDate)
-        const endDate = new Date(selectedDate)
-        endDate.setHours(23, 59, 59, 999)
-        params.append('startDate', startDate.toISOString())
-        params.append('endDate', endDate.toISOString())
+        filters.dateFrom = selectedDate.toISOString().split('T')[0]
+        filters.dateTo = selectedDate.toISOString().split('T')[0]
       }
       
-      const response = await fetch(`/api/logs?${params.toString()}`)
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch logs')
-      }
-      
-      const data = await response.json()
+      const data = await LogService.getLogs(filters)
       setDecisionHistory(data.logs || [])
+      
+      // Extract unique values for filter dropdowns
+      const grades = [...new Set(data.logs.map(log => log.alloyGrade))]
+      const operators = [...new Set(data.logs.map(log => log.operator))]
+      setAvailableGrades(grades)
+      setAvailableOperators(operators)
+      
     } catch (err) {
       setError('Error loading decision logs')
       console.error(err)
@@ -86,64 +82,29 @@ export default function HistoryPage() {
     }
   }
 
-  const fetchFilters = async () => {
-    try {
-      const response = await fetch('/api/logs/filters')
-      
-      if (response.ok) {
-        const data = await response.json()
-        setFilters(data)
-      }
-    } catch (err) {
-      console.error('Error fetching filters', err)
-    }
-  }
-
   const exportData = async (format: 'csv' | 'json') => {
     try {
-      const params = new URLSearchParams()
-      params.append('format', format)
-      if (filterGrade && filterGrade !== 'all') params.append('alloyGrade', filterGrade)
-      if (filterOperator && filterOperator !== 'all') params.append('operator', filterOperator)
-      if (filterOutcome && filterOutcome !== 'all') params.append('outcome', filterOutcome)
-      if (selectedDate) {
-        const startDate = new Date(selectedDate)
-        const endDate = new Date(selectedDate)
-        endDate.setHours(23, 59, 59, 999)
-        params.append('startDate', startDate.toISOString())
-        params.append('endDate', endDate.toISOString())
-      }
+      const logIds = decisionHistory.map(log => log.id)
+      const result = await LogService.bulkOperation('export', logIds)
       
-      const response = await fetch('/api/logs/bulk', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          operation: 'export'
-        })
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to export data')
-      }
+      const filename = `analysis_logs_${new Date().toISOString().split('T')[0]}`
       
       if (format === 'csv') {
-        const csvData = await response.text()
+        // Convert to CSV
+        const csvData = convertToCSV(result.logs)
         const blob = new Blob([csvData], { type: 'text/csv' })
         const url = window.URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = 'decision_logs.csv'
+        a.download = `${filename}.csv`
         a.click()
         window.URL.revokeObjectURL(url)
       } else {
-        const jsonData = await response.json()
-        const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' })
+        const blob = new Blob([JSON.stringify(result.logs, null, 2)], { type: 'application/json' })
         const url = window.URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = 'decision_logs.json'
+        a.download = `${filename}.json`
         a.click()
         window.URL.revokeObjectURL(url)
       }
@@ -162,6 +123,29 @@ export default function HistoryPage() {
     }
   }
 
+  const convertToCSV = (logs: AnalysisLog[]) => {
+    const headers = [
+      'ID', 'Timestamp', 'Operator', 'Batch ID', 'Alloy Grade', 'Furnace ID',
+      'Total Cost (₹)', 'Total Additions (kg)', 'Outcome', 'Confidence', 'Model Used'
+    ]
+    
+    const rows = logs.map(log => [
+      log.id,
+      log.timestamp,
+      log.operator,
+      log.batchId,
+      log.alloyGrade,
+      log.furnaceId,
+      log.totalCost.toFixed(2),
+      log.totalAdditions.toFixed(2),
+      log.outcome,
+      log.confidence,
+      log.aiModelUsed
+    ])
+    
+    return [headers, ...rows].map(row => row.join(',')).join('\n')
+  }
+
   const clearFilters = () => {
     setSelectedDate(undefined)
     setFilterGrade("all")
@@ -169,15 +153,8 @@ export default function HistoryPage() {
     setFilterOutcome("all")
   }
 
-  // Filter decisions locally for display
-  const filteredDecisions = decisionHistory.filter(decision => {
-    if (selectedDate) {
-      const decisionDate = new Date(decision.timestamp).toDateString()
-      const selectedDateString = selectedDate.toDateString()
-      if (decisionDate !== selectedDateString) return false
-    }
-    return true // API already handles other filters
-  })
+  // Filter decisions locally for display (API already handles most filters)
+  const filteredDecisions = decisionHistory
 
   const getCompositionDiff = (pre: any, post: any, element: string) => {
     const diff = post[element] - pre[element]
@@ -240,7 +217,7 @@ export default function HistoryPage() {
               </SelectTrigger>
               <SelectContent className="bg-slate-800 border-slate-700">
                 <SelectItem value="all" className="text-white">All Grades</SelectItem>
-                {filters.alloyGrades.map((grade: string) => (
+                {availableGrades.map((grade: string) => (
                   <SelectItem key={grade} value={grade} className="text-white">
                     {grade}
                   </SelectItem>
@@ -254,7 +231,7 @@ export default function HistoryPage() {
               </SelectTrigger>
               <SelectContent className="bg-slate-800 border-slate-700">
                 <SelectItem value="all" className="text-white">All Operators</SelectItem>
-                {filters.operators.map((operator: string) => (
+                {availableOperators.map((operator: string) => (
                   <SelectItem key={operator} value={operator} className="text-white">
                     {operator}
                   </SelectItem>
@@ -268,9 +245,9 @@ export default function HistoryPage() {
               </SelectTrigger>
               <SelectContent className="bg-slate-800 border-slate-700">
                 <SelectItem value="all" className="text-white">All Outcomes</SelectItem>
-                {filters.outcomes.map((outcome: string) => (
+                {availableOutcomes.map((outcome: string) => (
                   <SelectItem key={outcome} value={outcome} className="text-white">
-                    <Badge variant={outcome === 'success' ? 'default' : outcome === 'warning' ? 'secondary' : 'destructive'}>
+                    <Badge variant={outcome === 'approved' ? 'default' : outcome === 'pending' ? 'secondary' : 'destructive'}>
                       {outcome}
                     </Badge>
                   </SelectItem>
@@ -299,8 +276,8 @@ export default function HistoryPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {filteredDecisions.map((decision: LogEntry, index: number) => (
-            <Card key={decision._id} className="bg-slate-800/50 border-slate-700">
+          {filteredDecisions.map((decision: AnalysisLog, index: number) => (
+            <Card key={decision._id?.toString() || decision.id} className="bg-slate-800/50 border-slate-700">
               <CardContent className="pt-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-4">
@@ -309,60 +286,62 @@ export default function HistoryPage() {
                       <span className="text-white font-medium">{decision.batchId}</span>
                     </div>
                     <Badge variant="secondary" className={`${
-                      decision.outcome === 'success' 
+                      decision.outcome === 'approved' 
                         ? 'bg-green-500/10 text-green-400 border-green-500/20' 
-                        : decision.outcome === 'partial'
+                        : decision.outcome === 'pending'
                         ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
                         : 'bg-red-500/10 text-red-400 border-red-500/20'
                     }`}>
-                      {decision.outcome === 'success' ? 'Target Achieved' : decision.outcome}
+                      {decision.outcome === 'approved' ? 'Approved' : decision.outcome}
                     </Badge>
                     <Badge variant="secondary" className="bg-blue-500/10 text-blue-400 border-blue-500/20">
                       {decision.alloyGrade}
                     </Badge>
+                    {decision.metallurgistEdits && (
+                      <Badge variant="secondary" className="bg-purple-500/10 text-purple-400 border-purple-500/20">
+                        Edited by Metallurgist
+                      </Badge>
+                    )}
                   </div>
                   <div className="text-right text-sm text-slate-400">
-                    <div>
-                      {typeof decision.timestamp === 'string' 
-                        ? decision.timestamp 
-                        : decision.timestamp.toLocaleString()
-                      }
-                    </div>
-                    <div>Operator: {decision.operator || 'System'}</div>
+                    <div>{decision.timestamp}</div>
+                    <div>Operator: {decision.operator}</div>
+                    <div>Furnace: {decision.furnaceId}</div>
                   </div>
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-6">
                   {/* Pre/Post Composition */}
                   <div className="space-y-4">
-                  <h4 className="text-white font-medium">Composition Changes</h4>
-                  <div className="space-y-2">
-                    {Object.keys(decision.preComposition).map((element) => {
-                      const diff = getCompositionDiff(decision.preComposition, decision.postComposition, element)
-                      return (
-                        <div key={element} className="flex items-center justify-between p-2 rounded bg-slate-700/30">
-                          <span className="text-slate-300 font-mono">{element}</span>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-slate-400 text-sm">
-                              {decision.preComposition[element as keyof typeof decision.preComposition]}%
-                            </span>
-                            <span className="text-slate-500">→</span>
-                            <span className="text-white text-sm">
-                              {decision.postComposition[element as keyof typeof decision.postComposition]}%
-                            </span>
-                            <div className={`flex items-center ${diff.color}`}>
-                              {diff.icon}
-                              <span className="text-xs ml-1">
-                                {diff.value > 0 ? "+" : ""}
-                                {diff.value.toFixed(2)}
+                    <h4 className="text-white font-medium">Composition Changes</h4>
+                    <div className="space-y-2">
+                      {Object.keys(decision.preComposition).map((element) => {
+                        const diff = getCompositionDiff(decision.preComposition, decision.postComposition, element)
+                        return (
+                          <div key={element} className="flex items-center justify-between p-2 rounded bg-slate-700/30">
+                            <span className="text-slate-300 font-mono">{element}</span>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-slate-400 text-sm">
+                                {decision.preComposition[element as keyof typeof decision.preComposition].toFixed(3)}%
                               </span>
+                              <span className="text-slate-500">→</span>
+                              <span className="text-white text-sm">
+                                {decision.postComposition[element as keyof typeof decision.postComposition].toFixed(3)}%
+                              </span>
+                              <div className={`flex items-center ${diff.color}`}>
+                                {diff.icon}
+                                <span className="text-xs ml-1">
+                                  {diff.value > 0 ? "+" : ""}
+                                  {diff.value.toFixed(3)}
+                                </span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      )
-                    })}
+                        )
+                      })}
+                    </div>
+
                   </div>
-                </div>
 
                 {/* Recommendations */}
                 <div className="space-y-4">
@@ -382,28 +361,37 @@ export default function HistoryPage() {
 
                 {/* Cost Impact */}
                 <div className="space-y-4">
-                  <h4 className="text-white font-medium">Impact Analysis</h4>
+                  <h4 className="text-white font-medium">Cost Analysis</h4>
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Batch ID:</span>
-                      <span className="text-white font-mono">{decision.batchId}</span>
+                      <span className="text-slate-400">Batch Weight:</span>
+                      <span className="text-white font-mono">{decision.batchWeight} kg</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Cost Impact:</span>
-                      <span className={`font-mono ${decision.costImpact < 0 ? 'text-green-400' : 'text-red-400'}`}>
-                        {decision.costImpact < 0 ? '-' : '+'}${Math.abs(decision.costImpact).toFixed(2)}
-                      </span>
+                      <span className="text-slate-400">Total Additions:</span>
+                      <span className="text-white font-mono">{decision.totalAdditions.toFixed(2)} kg</span>
                     </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Total Cost:</span>
+                      <span className="text-white font-mono">₹{decision.totalCost.toFixed(2)}</span>
+                    </div>
+
                     <div className="pt-2 border-t border-slate-700">
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-400">AI Model:</span>
+                        <span className="text-blue-400 text-sm">{decision.aiModelUsed}</span>
+                      </div>
+                      <div className="flex justify-between items-center mt-1">
+                        <span className="text-slate-400">Confidence:</span>
+                        <span className="text-green-400 font-mono">{decision.confidence}%</span>
+                      </div>
+                    </div>
+                    <div className="pt-2">
                       <Badge
                         variant="secondary"
-                        className={`w-full justify-center ${
-                          decision.costImpact < 0 
-                            ? 'bg-green-500/10 text-green-400 border-green-500/20' 
-                            : 'bg-red-500/10 text-red-400 border-red-500/20'
-                        }`}
+                        className="w-full justify-center bg-blue-500/10 text-blue-400 border-blue-500/20"
                       >
-                        {decision.costImpact < 0 ? 'Savings Achieved' : 'Cost Increase'}
+                        Material Cost: ₹{decision.totalCost.toFixed(2)}
                       </Badge>
                     </div>
                   </div>

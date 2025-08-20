@@ -5,7 +5,7 @@ import { ObjectId } from 'mongodb';
 export class AlloyService {
   private static async getCollection() {
     const client = await clientPromise;
-    const db = client.db('alloymindai');
+    const db = client.db('AlloyMindAI');
     return db.collection('AlloyConfig');
   }
 

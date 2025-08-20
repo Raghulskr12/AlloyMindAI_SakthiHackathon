@@ -1,0 +1,158 @@
+{
+  "grade": "ASTMA395",
+  "version": "Updated Targets",
+  "target_specifications": {
+    "C": 3.6,
+    "Si": 3.0,
+    "Mn": 0.725,
+    "P": 0.0,
+    "S": 0.004,
+    "Cu": 0.175,
+    "Mg": 0.04
+  },
+  "key_changes": {
+    "manganese": "Increased from 0.225% to 0.725% (3.2x)",
+    "phosphorus": "Reduced from 0.020% to 0.000% (zero P)"
+  },
+  "lightgbm": {
+    "C_Element_Config": {
+      "test_rmse": 0.11501094936667638,
+      "test_mae": 0.0729270005139986,
+      "test_r2": 0.9976312502254817,
+      "device_used": "GPU"
+    },
+    "Si_Element_Config": {
+      "test_rmse": 0.1130828108553878,
+      "test_mae": 0.0670013095256881,
+      "test_r2": 0.9977183638189825,
+      "device_used": "GPU"
+    },
+    "Mn_Element_Config": {
+      "test_rmse": 0.09328645215383405,
+      "test_mae": 0.05911324381810628,
+      "test_r2": 0.9972575037916065,
+      "device_used": "GPU"
+    },
+    "P_Element_Config": {
+      "test_rmse": 0.008229760888239943,
+      "test_mae": 0.0038373193975539343,
+      "test_r2": 0.9991238167622561,
+      "device_used": "GPU"
+    },
+    "S_Element_Config": {
+      "test_rmse": 0.0001900632920188066,
+      "test_mae": 9.735951907028734e-05,
+      "test_r2": 0.9999866536692629,
+      "device_used": "GPU"
+    },
+    "Cu_Element_Config": {
+      "test_rmse": 0.03717600805269124,
+      "test_mae": 0.02239581683771883,
+      "test_r2": 0.9988385962408686,
+      "device_used": "GPU"
+    },
+    "Mg_Element_Config": {
+      "test_rmse": 0.009935162137555072,
+      "test_mae": 0.004660914348840912,
+      "test_r2": 0.9961764027167412,
+      "device_used": "GPU"
+    }
+  },
+  "catboost": {
+    "C_Element_Config": {
+      "test_rmse": 0.1658985878909433,
+      "test_mae": 0.1163834820537608,
+      "test_r2": 0.9950713703205482,
+      "device_used": "GPU"
+    },
+    "Si_Element_Config": {
+      "test_rmse": 0.18952119504419265,
+      "test_mae": 0.13041058470078032,
+      "test_r2": 0.9935913171878316,
+      "device_used": "GPU"
+    },
+    "Mn_Element_Config": {
+      "test_rmse": 0.1404752494439225,
+      "test_mae": 0.09710948687725178,
+      "test_r2": 0.9937811725498192,
+      "device_used": "GPU"
+    },
+    "P_Element_Config": {
+      "test_rmse": 0.023707417026833273,
+      "test_mae": 0.013472796563959584,
+      "test_r2": 0.9927290863895966,
+      "device_used": "GPU"
+    },
+    "S_Element_Config": {
+      "test_rmse": 0.0010183363897781595,
+      "test_mae": 0.0006965287581196898,
+      "test_r2": 0.9996168684512757,
+      "device_used": "GPU"
+    },
+    "Cu_Element_Config": {
+      "test_rmse": 0.05795814287753276,
+      "test_mae": 0.040624252540251204,
+      "test_r2": 0.9971771575314382,
+      "device_used": "GPU"
+    },
+    "Mg_Element_Config": {
+      "test_rmse": 0.00867656105028597,
+      "test_mae": 0.006119885968598594,
+      "test_r2": 0.9970837988277288,
+      "device_used": "GPU"
+    }
+  },
+  "ensemble": {
+    "C_Element_Config": {
+      "rmse": 0.1131408793879573,
+      "mae": 0.08112584099086727,
+      "r2": 0.997707655373556
+    },
+    "Si_Element_Config": {
+      "rmse": 0.11810015474438902,
+      "mae": 0.08094271253126166,
+      "r2": 0.9975114054924027
+    },
+    "Mn_Element_Config": {
+      "rmse": 0.10106965674225948,
+      "mae": 0.06956481241814302,
+      "r2": 0.996780781428632
+    },
+    "P_Element_Config": {
+      "rmse": 0.012794269084603361,
+      "mae": 0.007278262257154412,
+      "r2": 0.9978823632417951
+    },
+    "S_Element_Config": {
+      "rmse": 0.0005053240432008254,
+      "mae": 0.0003451290534404821,
+      "r2": 0.9999056579490923
+    },
+    "Cu_Element_Config": {
+      "rmse": 0.036273127130335356,
+      "mae": 0.0268404987127776,
+      "r2": 0.9988943244239009
+    },
+    "Mg_Element_Config": {
+      "rmse": 0.007800712677480093,
+      "mae": 0.004842603717967645,
+      "r2": 0.997642830624178
+    }
+  },
+  "model_info": {
+    "target_columns": [
+      "C_Element_Config",
+      "Si_Element_Config",
+      "Mn_Element_Config",
+      "P_Element_Config",
+      "S_Element_Config",
+      "Cu_Element_Config",
+      "Mg_Element_Config"
+    ],
+    "ensemble_weights": [
+      0.5,
+      0.5
+    ],
+    "grade": "ASTMA395"
+  }
+}

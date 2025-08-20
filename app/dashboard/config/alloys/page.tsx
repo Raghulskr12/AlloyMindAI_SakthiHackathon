@@ -118,24 +118,81 @@ export default function AlloySpecificationPage() {
     }
   }
 
-  // Initialize a new grade or edit existing one
-  const initializeGrade = (grade?: AlloyGrade) => {
-    if (grade) {
-      setTempGrade({...grade})
-      setIsEditMode(true)
-    } else {
-      setTempGrade({
+  // Create new alloy grade
+  const createNewGrade = async () => {
+    if (!newGradeName || !newGradeCategory) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      })
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      
+      const newGrade = {
         id: `custom-${Date.now()}`,
         name: newGradeName,
         category: newGradeCategory,
         elements: {
           C: { min: 0.1, max: 1.0, target: 0.5 },
           Mn: { min: 0.1, max: 2.0, target: 1.0 },
+          Si: { min: 0.1, max: 1.0, target: 0.3 },
+          P: { min: 0.01, max: 0.05, target: 0.03 },
+          S: { min: 0.01, max: 0.05, target: 0.03 },
         },
-        applications: [],
-        status: "active"
+        applications: newApplication ? [newApplication] : [],
+        status: "active" as const
+      }
+
+      const response = await fetch('/api/alloys', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newGrade),
       })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to create alloy')
+      }
+
+      const result = await response.json()
+      
+      toast({
+        title: "Success",
+        description: "Alloy created successfully",
+      })
+
+      // Add the new grade to the list and select it
+      setAlloyGrades(prev => [...prev, newGrade as AlloyGrade])
+      setSelectedGrade(newGrade as AlloyGrade)
+      
+      // Reset form and close dialog
+      setNewGradeName("")
+      setNewGradeCategory("")
+      setNewApplication("")
+      setIsCreateDialogOpen(false)
+      
+    } catch (error) {
+      console.error('Error creating alloy:', error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create alloy. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoading(false)
     }
+  }
+
+  // Initialize grade for editing
+  const initializeGrade = (grade: AlloyGrade) => {
+    setTempGrade({...grade})
+    setIsEditMode(true)
   }
 
   // Handle element target change
@@ -340,7 +397,7 @@ export default function AlloySpecificationPage() {
   }
 
   return (
-    <>
+    <div className="flex flex-col min-h-screen bg-slate-900">
       <div className="flex h-16 shrink-0 items-center gap-2 border-b border-slate-700 px-4 bg-slate-900">
         <div className="flex-1 flex items-center">
           <h1 className="text-xl font-semibold text-white">Alloy Specifications</h1>
@@ -407,14 +464,10 @@ export default function AlloySpecificationPage() {
                   </Button>
                   <Button 
                     className="bg-blue-600 hover:bg-blue-700"
-                    onClick={() => {
-                      initializeGrade()
-                      setIsCreateDialogOpen(false)
-                      setIsEditMode(true)
-                    }}
-                    disabled={!newGradeName || !newGradeCategory}
+                    onClick={createNewGrade}
+                    disabled={!newGradeName || !newGradeCategory || isLoading}
                   >
-                    Create Grade
+                    {isLoading ? "Creating..." : "Create Grade"}
                   </Button>
                 </div>
               </div>
@@ -824,6 +877,6 @@ export default function AlloySpecificationPage() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }

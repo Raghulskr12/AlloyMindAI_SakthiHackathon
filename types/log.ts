@@ -1,73 +1,73 @@
-// Log entry interface for decision history
-export interface LogEntry {
-  _id?: string;
-  id: string;
-  timestamp: Date | string;
-  operator: string;
-  batchId: string;
-  alloyGrade: string;
-  preComposition: {
-    [element: string]: number;
-  };
-  postComposition: {
-    [element: string]: number;
-  };
-  outcome: 'success' | 'failure' | 'partial' | 'pending';
-  costImpact: number; // Negative values indicate savings
-  recommendations: string[];
-  confidence: number; // 0-100
-  userId?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+import { ObjectId } from 'mongodb'
+
+export interface ElementComposition {
+  C: number
+  Si: number
+  Mn: number
+  P: number
+  S: number
+  Cu: number
+  Mg: number
 }
 
-// Statistics interface for dashboard metrics
-export interface LogStatistics {
-  summary: {
-    totalLogs: number;
-    successCount: number;
-    failureCount: number;
-    successRate: number;
-    avgConfidence: number;
-    totalCostSavings: number;
-  };
-  topAlloyGrades: {
-    alloyGrade: string;
-    count: number;
-  }[];
-  recentLogs: LogEntry[];
+export interface ElementAdjustment {
+  element: string
+  originalKg: number
+  finalKg: number
+  cost: number
+  priority: string
 }
 
-// Filter options interface
+export interface AnalysisLog {
+  _id?: ObjectId
+  id: string // Generated log ID (e.g., "LOG2025-001")
+  timestamp: string
+  operator: string
+  operatorId: string // Clerk user ID
+  batchId: string // Generated batch ID (e.g., "BATCH2025-001")
+  alloyGrade: string
+  furnaceId: string
+  batchWeight: number
+  preComposition: ElementComposition
+  targetComposition: ElementComposition
+  postComposition: ElementComposition // After AI + metallurgist adjustments
+  elementAdjustments: ElementAdjustment[]
+  totalAdditions: number // kg
+  totalCost: number // INR
+  costPerKg: number // INR per kg
+  outcome: 'approved' | 'rejected' | 'pending'
+  recommendations: string[]
+  aiModelUsed: string
+  modelPerformance: {
+    accuracy: number
+    r2Score: number
+    elementsProcessed: number
+  }
+  metallurgistEdits: boolean
+  editedElements: string[]
+  confidence: number
+  createdAt: Date
+  updatedAt: Date
+}
+
 export interface LogFilters {
-  alloyGrades: string[];
-  operators: string[];
-  outcomes: string[];
+  operator?: string
+  alloyGrade?: string
+  batchId?: string
+  outcome?: string
+  dateFrom?: string
+  dateTo?: string
+  page?: number
+  limit?: number
 }
 
-// Pagination interface
-export interface LogPagination {
-  total: number;
-  limit: number;
-  offset: number;
-  hasMore: boolean;
-}
-
-// API response interfaces
-export interface LogsResponse {
-  logs: LogEntry[];
-  pagination: LogPagination;
-}
-
-export interface BulkOperationResponse {
-  message: string;
-  insertedCount?: number;
-  deletedCount?: number;
-  insertedIds?: Record<number, any>;
-}
-
-export interface ExportResponse {
-  data: LogEntry[];
-  count: number;
-  exportedAt: string;
+export interface LogStats {
+  totalLogs: number
+  approvedLogs: number
+  rejectedLogs: number
+  averageCost: number
+  totalCostSavings: number
+  mostUsedGrade: string
+  topOperator: string
+  averageConfidence: number
 }

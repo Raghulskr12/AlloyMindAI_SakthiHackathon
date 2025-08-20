@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { User, Shield, Bell, Eye, Settings, Clock, Save, Mail, Calendar } from "lucide-react"
+import { User, Shield, Settings, Clock, Save, Mail, Calendar } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
 
 interface UserProfile {
@@ -17,20 +17,6 @@ interface UserProfile {
   role: string
   department: string
   shift: string
-  permissions: {
-    view: boolean
-    approve: boolean
-    configure: boolean
-    emergency: boolean
-  }
-  preferences: {
-    notifications: boolean
-    emailAlerts: boolean
-    soundAlerts: boolean
-    darkMode: boolean
-    autoRefresh: boolean
-    refreshInterval: number
-  }
 }
 
 export default function ProfilePage() {
@@ -41,20 +27,6 @@ export default function ProfilePage() {
     role: "operator",
     department: "Production",
     shift: "Day Shift",
-    permissions: {
-      view: true,
-      approve: false,
-      configure: false,
-      emergency: false,
-    },
-    preferences: {
-      notifications: true,
-      emailAlerts: true,
-      soundAlerts: false,
-      darkMode: true,
-      autoRefresh: true,
-      refreshInterval: 30,
-    },
   })
 
   useEffect(() => {
@@ -72,8 +44,6 @@ export default function ProfilePage() {
         role,
         department: (user.unsafeMetadata?.department as string) || prev.department,
         shift: (user.unsafeMetadata?.shift as string) || prev.shift,
-        permissions: (user.unsafeMetadata?.permissions as typeof prev.permissions) || prev.permissions,
-        preferences: (user.unsafeMetadata?.preferences as typeof prev.preferences) || prev.preferences,
       }))
     }
   }, [user])
@@ -122,8 +92,6 @@ export default function ProfilePage() {
             role: profile.role,
             department: profile.department,
             shift: profile.shift,
-            permissions: profile.permissions,
-            preferences: profile.preferences,
           }
         })
         setIsEditing(false)
@@ -366,124 +334,6 @@ export default function ProfilePage() {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Preferences */}
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center space-x-2">
-                  <Bell className="w-5 h-5" />
-                  <span>Preferences</span>
-                </CardTitle>
-                <CardDescription className="text-slate-400">
-                  Customize your notification and display settings
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 rounded border border-slate-600">
-                      <div className="space-y-1">
-                        <span className="text-white font-medium">Push Notifications</span>
-                        <p className="text-sm text-slate-400">Receive alerts and updates</p>
-                      </div>
-                      <Switch
-                        checked={profile.preferences.notifications}
-                        onCheckedChange={(checked) =>
-                          setProfile({
-                            ...profile,
-                            preferences: { ...profile.preferences, notifications: checked },
-                          })
-                        }
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between p-3 rounded border border-slate-600">
-                      <div className="space-y-1">
-                        <span className="text-white font-medium">Email Alerts</span>
-                        <p className="text-sm text-slate-400">Get important updates via email</p>
-                      </div>
-                      <Switch
-                        checked={profile.preferences.emailAlerts}
-                        onCheckedChange={(checked) =>
-                          setProfile({
-                            ...profile,
-                            preferences: { ...profile.preferences, emailAlerts: checked },
-                          })
-                        }
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between p-3 rounded border border-slate-600">
-                      <div className="space-y-1">
-                        <span className="text-white font-medium">Sound Alerts</span>
-                        <p className="text-sm text-slate-400">Play sound for critical alerts</p>
-                      </div>
-                      <Switch
-                        checked={profile.preferences.soundAlerts}
-                        onCheckedChange={(checked) =>
-                          setProfile({
-                            ...profile,
-                            preferences: { ...profile.preferences, soundAlerts: checked },
-                          })
-                        }
-                        disabled={!isEditing}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 rounded border border-slate-600">
-                      <div className="space-y-1">
-                        <span className="text-white font-medium">Auto Refresh</span>
-                        <p className="text-sm text-slate-400">Automatically update data</p>
-                      </div>
-                      <Switch
-                        checked={profile.preferences.autoRefresh}
-                        onCheckedChange={(checked) =>
-                          setProfile({
-                            ...profile,
-                            preferences: { ...profile.preferences, autoRefresh: checked },
-                          })
-                        }
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="refreshInterval" className="text-slate-300">
-                        Refresh Interval (seconds)
-                      </Label>
-                      <Select
-                        value={profile.preferences.refreshInterval.toString()}
-                        onValueChange={(value) =>
-                          setProfile({
-                            ...profile,
-                            preferences: { ...profile.preferences, refreshInterval: parseInt(value) },
-                          })
-                        }
-                        disabled={!isEditing || !profile.preferences.autoRefresh}
-                      >
-                        <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white disabled:opacity-50">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-slate-800 border-slate-700">
-                          <SelectItem value="15" className="text-white">
-                            15 seconds
-                          </SelectItem>
-                          <SelectItem value="30" className="text-white">
-                            30 seconds
-                          </SelectItem>
-                          <SelectItem value="60" className="text-white">
-                            1 minute
-                          </SelectItem>
-                          <SelectItem value="300" className="text-white">
-                            5 minutes
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Account Info Sidebar */}
@@ -520,34 +370,6 @@ export default function ProfilePage() {
                   <Badge variant="secondary" className="bg-green-500/10 text-green-400 border-green-500/20">
                     {user.emailAddresses?.[0]?.verification?.status === "verified" ? "Verified" : "Pending"}
                   </Badge>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center space-x-2">
-                  <Eye className="w-5 h-5" />
-                  <span>Permissions</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  {Object.entries(profile.permissions).map(([key, value]) => (
-                    <div key={key} className="flex items-center justify-between">
-                      <span className="text-sm text-slate-300 capitalize">{key}</span>
-                      <Badge
-                        variant="secondary"
-                        className={
-                          value
-                            ? "bg-green-500/10 text-green-400 border-green-500/20"
-                            : "bg-red-500/10 text-red-400 border-red-500/20"
-                        }
-                      >
-                        {value ? "Granted" : "Denied"}
-                      </Badge>
-                    </div>
-                  ))}
                 </div>
               </CardContent>
             </Card>
