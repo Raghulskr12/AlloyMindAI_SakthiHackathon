@@ -16,9 +16,9 @@ This guide will walk you through installing AlloyMind AI on your local developme
 - **MongoDB**: 6.0 or higher
 - **Git**: Latest version
 
-## 🚀 Installation Methods
+## 🚀 Installation Setup
 
-### Method 1: Local Development Setup (Recommended)
+### Local Development Setup
 
 #### Step 1: Clone Repository
 
@@ -98,34 +98,6 @@ python main.py
 # Backend API will be available at http://localhost:8000
 # API documentation at http://localhost:8000/docs
 ```
-
-### Method 2: Docker Setup
-
-#### Prerequisites
-- **Docker**: 20.0 or higher
-- **Docker Compose**: 2.0 or higher
-
-#### Quick Start with Docker
-
-```bash
-# Clone repository
-git clone https://github.com/Raghulskr12/AlloyMindAI_SakthiHackathon.git
-cd AlloyMindAI_SakthiHackathon
-
-# Copy environment file
-cp .env.example .env.local
-
-# Build and start services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-```
-
-The application will be available at:
-- Frontend: http://localhost:3000
-- Backend: http://localhost:8000
-- MongoDB: localhost:27017
 
 ## ⚙️ Configuration
 

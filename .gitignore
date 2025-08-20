@@ -151,6 +151,3 @@ api-keys.json
 test-results/
 playwright-report/
 playwright/.cache/
-
-# Docker
-docker-compose.override.yml

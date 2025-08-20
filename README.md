@@ -181,13 +181,6 @@ npm start
 uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
 ```
 
-### Docker Deployment
-
-```bash
-# Build and run with Docker Compose
-docker-compose up -d
-```
-
 ### Environment Variables
 
 Create `.env.local` in the root directory:
